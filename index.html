@@ -1525,9 +1525,92 @@ function Tablero({tipo}){
   </div>;
 }
 
+function ClientIdForm({toast}){
+  const [cid,setCid]=useState(localStorage.getItem("wao_clientId")||APP.g.clientId);
+  function guardar(){ const c=cid.trim(); if(!c){toast("Pega el Client ID de Google");return;}
+    localStorage.setItem("wao_clientId",c);
+    if(!confirm("Guardar y reiniciar la app para conectar con tu Google Drive?"))return;
+    localStorage.setItem("pp_mode","graph"); location.reload(); }
+  function restaurar(){ localStorage.removeItem("wao_clientId"); location.reload(); }
+  return <div style={{marginTop:8}}>
+    <Field label="Client ID de Google (.apps.googleusercontent.com)"><input className="inp" value={cid} onChange={e=>setCid(e.target.value)} placeholder="000000000000-xxxx.apps.googleusercontent.com"/></Field>
+    <div className="row"><button className="btn primary" onClick={guardar}>Guardar y reiniciar</button>
+      <button className="btn ghost" onClick={restaurar}>Borrar</button></div>
+    <div className="hint" style={{marginTop:8}}>Lo obtienes en <b>console.cloud.google.com → Credenciales → ID de cliente OAuth (Aplicación web)</b>. No es secreto.</div></div>;
+}
+function ReasignarResp({toast}){
+  const [mod,setMod]=useState("ILD"); const [rows,setRows]=useState([]);
+  const [area,setArea]=useState("__todas"); const [dest,setDest]=useState(""); const [busy,setBusy]=useState(false);
+  const [campo,setCampo]=useState("aprobador"); // solo ILD: aprobador | responsable
+  const areaField=mod==="ILD"?"area":(mod==="Compras"?"Area":"Departamento");
+  const load=async()=>{ try{ setRows(await Store.read(mod)); }catch(e){ setRows([]); } };
+  useEffect(()=>{ load(); setArea("__todas"); setCampo(mod==="ILD"?"aprobador":"solicitante"); },[mod]);
+  const nombres=[...new Set(USERS.map(u=>u.nombre))].sort();
+  const areas=[...new Set(rows.map(r=>r[areaField]).filter(Boolean))].sort();
+  const areasAC=Object.keys(AC);
+  const afect=rows.filter(r=>area==="__todas"||r[areaField]===area);
+  const destList = (mod==="ILD"&&campo==="area")?areasAC:nombres;
+  function setField(r){ if(mod!=="ILD") return {...r,Solicitante:dest};
+    if(campo==="aprobador") return {...r,aprobadorEsperado:dest};
+    if(campo==="area") return {...r,area:dest};
+    return {...r,usuario:dest}; }
+  async function aplicar(){ if(!dest){toast("Elige el destino");return;}
+    if(!afect.length){toast("No hay registros para reasignar");return;}
+    const etiqueta = mod==="ILD"?(campo==="aprobador"?"aprobador":campo==="area"?"área":"responsable"):"solicitante";
+    if(!confirm(`Cambiar el ${etiqueta} de ${afect.length} registro(s) de ${mod}${area!=="__todas"?(" · "+area):""} a "${dest}"?`))return;
+    setBusy(true);
+    try{ const all=await Store.read(mod); const set=new Set(afect.map(r=>r.id));
+      const upd=all.map(r=>set.has(r.id)?setField(r):r);
+      await Store.write(mod,upd); toast(`Actualizados ${afect.length} registro(s)`); load();
+    }catch(e){ toast("No se pudo: "+(e.message||"")); } finally{ setBusy(false); }
+  }
+  async function restaurarResp(){
+    if(!confirm("Restaurar el responsable (quien envió) de los ILD a su valor original del histórico cargado?")) return;
+    setBusy(true);
+    try{ const all=await Store.read("ILD"); const orig=new Map((typeof ILD_SEED!=="undefined"?ILD_SEED:[]).map(s=>[s.id,s.usuario]));
+      let n=0; const upd=all.map(r=>{ if(orig.has(r.id)&&orig.get(r.id)&&r.usuario!==orig.get(r.id)){ n++; return {...r,usuario:orig.get(r.id)}; } return r; });
+      if(n){ await Store.write("ILD",upd); } toast(n?`Restaurados ${n} responsable(s)`:"No había nada que restaurar"); load();
+    }catch(e){ toast("No se pudo restaurar: "+(e.message||"")); } finally{ setBusy(false); }
+  }
+  return <div className="card"><h3>🔁 Reasignar aprobador / responsable</h3>
+    <div className="hint">Para que el histórico de un área le aparezca a un aprobador en su bandeja, reasigna el <b>aprobador</b>. (También puedes cambiar el responsable si lo necesitas.)</div>
+    <div className="row" style={{marginTop:10,gap:8,flexWrap:"wrap"}}>
+      <select className="inp" style={{flex:1,minWidth:130}} value={mod} onChange={e=>setMod(e.target.value)}>{["ILD"].map(m=><option key={m}>{m}</option>)}</select>
+      <select className="inp" style={{flex:1,minWidth:130}} value={area} onChange={e=>setArea(e.target.value)}><option value="__todas">Todas las áreas</option>{areas.map(a=><option key={a} value={a}>{a}</option>)}</select>
+    </div>
+    {mod==="ILD" && <Field label="¿Qué quieres reasignar?"><select className="inp" value={campo} onChange={e=>{setCampo(e.target.value);setDest("");}}>
+      <option value="aprobador">Aprobador (para que le salga a aprobar)</option>
+      <option value="area">Área (corregir el nombre en los registros)</option>
+      <option value="responsable">Responsable (quien envió)</option></select></Field>}
+    <Field label={(mod==="ILD"&&campo==="area")?"Área destino (nombre actual)":"Persona destino"}><select className="inp" value={dest} onChange={e=>setDest(e.target.value)}><option value="">— elegir —</option>{destList.map(n=><option key={n}>{n}</option>)}</select></Field>
+    <div className="hint">Se afectarán <b>{afect.length}</b> registro(s).</div>
+    <button className="btn primary block" style={{marginTop:10}} disabled={busy} onClick={aplicar}>{busy?"Aplicando…":"🔁 Aplicar"}</button>
+    <button className="btn ghost block" style={{marginTop:8}} disabled={busy} onClick={restaurarResp}>♻️ Restaurar responsable original (ILD)</button>
+  </div>;
+}
+function DeleteRecords({toast}){
+  const [mod,setMod]=useState("ILD"); const [rows,setRows]=useState([]);
+  const load=async()=>setRows(await Store.read(mod)); useEffect(()=>{load();},[mod]);
+  const idOf=r=>r.id||r.Codigo;
+  const codeOf=r=>r.Codigo||("#"+r.id);
+  const titleOf=r=> mod==="ILD"?`${r.area} · ${r.usuario}` : mod==="Compras"?r.Modelo : mod==="Sistemas"?r.Titulo : r.Descripcion;
+  async function del(id){ if(!confirm("¿Eliminar este registro de prueba? Es permanente y no afectará los índices del resto."))return;
+    try{ await Store.remove(mod, id); toast("Registro eliminado"); }
+    catch(e){ toast("No se pudo eliminar: "+(e.message||"")); } load(); }
+  return <div className="card"><h3>🗑 Borrar registros de prueba</h3>
+    <div className="hint">Elimina registros de prueba para que no afecten los indicadores. Acción permanente.</div>
+    <select className="inp" style={{margin:"10px 0"}} value={mod} onChange={e=>setMod(e.target.value)}>
+      {["ILD"].map(m=><option key={m}>{m}</option>)}</select>
+    {!rows.length && <div className="hint">Sin registros en {mod}.</div>}
+    <div style={{maxHeight:320,overflow:"auto"}}>
+    {rows.map(r=><div className="kv" key={idOf(r)}>
+      <span style={{flex:1}}><b style={{color:"var(--ink)"}}>{codeOf(r)}</b> · {titleOf(r)}</span>
+      <button className="btn red" style={{padding:"6px 11px",flex:"0 0 auto"}} onClick={()=>del(idOf(r))}>Eliminar</button></div>)}
+    </div></div>;
+}
 function Admin({user,toast}){
   const [counts,setCounts]=useState({}); const [reloadKey,setReloadKey]=useState(0); const [diag,setDiag]=useState("");
-  useEffect(()=>{(async()=>{ const o={}; for(const t of ["ILD","Compras","Sistemas","Mantenimiento"]) o[t]=(await Store.read(t)).length; setCounts(o); })();},[reloadKey]);
+  useEffect(()=>{(async()=>{ const o={}; for(const t of ["ILD"]) o[t]=(await Store.read(t)).length; setCounts(o); })();},[reloadKey]);
   async function exportar(t){ const data=await Store.read(t);
     if(!data.length){toast("Sin datos en "+t);return;}
     const rows = t==="ILD" ? data.map(ildToRow) : data;
@@ -1550,7 +1633,7 @@ function Admin({user,toast}){
     <div className="card"><h3>☁️ Conexión Google Drive</h3>
       <div className="kv"><b>Modo</b><span>{MODE==="graph"?"En vivo (Google Drive)":"Local (demo)"}</span></div>
       {MODE==="graph" && <div className="kv"><b>Cuenta Google</b><span>{graphUser||"—"}</span></div>}
-      <div className="kv"><b>Registros</b><span>ILD {counts.ILD||0} · Com {counts.Compras||0} · Sis {counts.Sistemas||0} · Mto {counts.Mantenimiento||0}</span></div>
+      <div className="kv"><b>Registros</b><span>ILD {counts.ILD||0}</span></div>
       <div className="kv"><b>Versión</b><span>{APP.version}</span></div>
       <div className="kv" style={{flexDirection:"column",alignItems:"flex-start",gap:4}}><b>Origen autorizado (regístralo en Google Cloud)</b>
         <code style={{fontSize:12,wordBreak:"break-all",background:"#f3efe6",padding:"4px 8px",borderRadius:8,width:"100%"}}>{window.location.origin}</code></div>
@@ -1571,7 +1654,7 @@ function Admin({user,toast}){
       <div className="hint">Pega aquí el <b>Client ID</b> de Google Cloud. Es lo único que necesitas para conectar la app con tu Drive.</div>
       <ClientIdForm toast={toast}/></div>
     <div className="card"><h3>📊 Exportar histórico a Excel</h3>
-      <div className="row">{["ILD","Compras","Sistemas","Mantenimiento"].map(t=><button key={t} className="btn green" onClick={()=>exportar(t)}>⬇ {t}</button>)}</div>
+      <div className="row">{["ILD"].map(t=><button key={t} className="btn green" onClick={()=>exportar(t)}>⬇ {t}</button>)}</div>
       <div className="hint" style={{marginTop:8}}>Cada jefatura también puede exportar sus ILD desde ILD → bandeja.</div></div>
         <DeleteRecords toast={toast}/>
     <ReasignarResp toast={toast}/>
