@@ -4,9 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#00545D" />
-<title>WAO Beach Venao</title>
+<title>WAO HOTELS - ILD's</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Playa%20Para%C3%ADso%22%2C%22short_name%22%3A%22Playa%20Para%C3%ADso%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d6e75%22%2C%22theme_color%22%3A%22%230d6e75%22%7D" />
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22WAO%20HOTELS%20-%20ILD's%22%2C%22short_name%22%3A%22WAO%20HOTELS%20-%20ILD's%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2300545D%22%2C%22theme_color%22%3A%22%2300545D%22%7D" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -242,9 +242,6 @@ let USERS=[
 const LOGO_B="data:image/png;base64,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";
 /* Histórico consolidado (sin duplicados, fotos base64 removidas) */
 const ILD_SEED = [];
-const COMPRAS_SEED = [];
-const SISTEMAS_SEED = [];
-const MANT_SEED = [];
 const NOTIF_SEED = [];
 
 /* Copia inmutable de los checklists/áreas originales (respaldo para registros antiguos) */
@@ -265,7 +262,7 @@ applyGestiona();
 
 /* ===== CONFIG ===== */
 const APP = {
-  version: "WAO Beach Venao · NEXO v1.1 · Google Drive",
+  version: "WAO HOTELS · ILD's · v1.2 · Google Drive",
   useGraph: false,   // arranca en DEMO LOCAL (ve las vistas sin conectar). Activa Google en Configuración → Conectar a Google Drive.
   g: {
     clientId: "",
@@ -368,41 +365,6 @@ const Local = {
   read:t=>{ try{return JSON.parse(localStorage.getItem("pp_"+t)||"[]")}catch{return[]} },
   write:(t,arr)=>localStorage.setItem("pp_"+t,JSON.stringify(arr))
 };
-const GBASE="https://graph.microsoft.com/v1.0";
-async function gfetch(path,method="GET",body=null,raw=false,headers=null){
-  const h={Authorization:`Bearer ${graphToken}`};
-  if(headers) Object.assign(h,headers);
-  if(body && !(body instanceof ArrayBuffer)) h["Content-Type"]="application/json";
-  else if(body instanceof ArrayBuffer) h["Content-Type"]="application/octet-stream";
-  const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),30000);
-  let r; try{ r=await fetch(GBASE+path,{method,headers:h,body:body?(body instanceof ArrayBuffer?body:JSON.stringify(body)):null,signal:ctrl.signal}); }
-  catch(e){ clearTimeout(to); throw new Error("conexión: "+(e.name==="AbortError"?"tiempo de espera agotado":e.message)); }
-  clearTimeout(to);
-  if(r.status===204) return null;
-  if(!r.ok){ let extra=""; try{ const j=await r.json(); extra=j.error&&j.error.message?(" — "+j.error.message):""; }catch{} throw new Error(method+" "+path.split("?")[0]+": "+r.status+extra); }
-  return raw?r.arrayBuffer():r.json();
-}
-const GraphStore = {
-  fileName:t=>`${APP.ms.base}/${APP.ms.files[t]}`,
-  async read(t){ try{
-      const buf=await gfetch(`/drives/${APP.ms.driveId}/root:/${this.fileName(t)}:/content`,"GET",null,true);
-      return JSON.parse(new TextDecoder().decode(buf)); }catch{ return []; } },
-  async write(t,arr){
-    const buf=new TextEncoder().encode(JSON.stringify(arr));
-    await gfetch(`/drives/${APP.ms.driveId}/root:/${this.fileName(t)}:/content`,"PUT",buf.buffer); },
-  async ensureCarpeta(carpetaId){ const folder=`${APP.ms.base}/${APP.ms.fotosFolder}`;
-    try{ await gfetch(`/drives/${APP.ms.driveId}/root:/${folder}/${carpetaId}`); }
-    catch{ try{ await gfetch(`/drives/${APP.ms.driveId}/root:/${folder}:/children`,"POST",{name:carpetaId,folder:{},"@microsoft.graph.conflictBehavior":"replace"}); }catch(e){} } },
-  async putFoto(dataUrl,nombre,carpetaId){ const folder=`${APP.ms.base}/${APP.ms.fotosFolder}`;
-    const blob=await (await fetch(dataUrl)).arrayBuffer();
-    await gfetch(`/drives/${APP.ms.driveId}/root:/${folder}/${carpetaId}/${nombre}:/content`,"PUT",blob);
-    return {nombre,path:`${folder}/${carpetaId}/${nombre}`}; },
-  async uploadFoto(dataUrl,nombre,carpetaId){ await this.ensureCarpeta(carpetaId); return this.putFoto(dataUrl,nombre,carpetaId); },
-  async getImg(path){
-    const buf=await gfetch(`/drives/${APP.ms.driveId}/root:/${path}:/content`,"GET",null,true);
-    return URL.createObjectURL(new Blob([buf]));
-  }
-};
 // ===== Backend de Google Drive (archivos JSON + fotos) =====
 const G_API="https://www.googleapis.com/drive/v3";
 const G_UP="https://www.googleapis.com/upload/drive/v3";
@@ -462,85 +424,9 @@ const GoogleStore = {
       const buf=await gdfetch(`${G_API}/files/${idOrPath}?alt=media`,"GET",null,true);
       return URL.createObjectURL(new Blob([buf])); }
 };
-// ===== Backend de LISTAS de SharePoint (un elemento por solicitud) =====
-const LIST_TABLES=["ILD","Compras","Sistemas","Mantenimiento","Notif"];
-let SP_SITE=null; const SP_LIST={}; const SP_MAP={}; const SP_COLS={}; const SP_DCOL={}; let SP_LISTNAMES=[];
-const PREFER_NX={Prefer:"HonorNonIndexedQueriesWarningMayFailRandomly"};
 const recFecha=r=>String(r.fecha||r.FechaSolicitud||r.FechaCreacion||"").slice(0,10);
 const recEstado=r=>String(r.estado||r.Estado||"");
 const norm=s=>String(s||"").toLowerCase().replace(/[\s_-]+/g,"");
-async function spSite(){ if(SP_SITE) return SP_SITE;
-  const s=await gfetch(`/sites/${APP.ms.siteHost}:${APP.ms.sitePath}`); SP_SITE=s.id; return SP_SITE; }
-// Descubre el nombre INTERNO real de cada columna y asegura una columna de datos multilínea
-async function spEnsureCols(site,lid,t){ if(SP_COLS[t]) return;
-  let cols=[]; try{ const r=await gfetch(`/sites/${site}/lists/${lid}/columns?$select=name,displayName,text,readOnly,hidden`); cols=r.value||[]; }catch(e){}
-  const findBy=pred=>cols.find(pred);
-  // 1. columna de datos: busca "Data" (interno o visible); si no, cualquier multilínea editable; si no, la crea
-  let dcol = findBy(c=>c.name==="Data") || findBy(c=>norm(c.displayName)==="data")
-          || findBy(c=>c.text&&c.text.allowMultipleLines&&!c.readOnly&&!c.hidden&&c.name!=="Title");
-  if(!dcol){ try{ const c=await gfetch(`/sites/${site}/lists/${lid}/columns`,"POST",{name:"Data",text:{allowMultipleLines:true}}); dcol=c; }catch(e){} }
-  SP_DCOL[t]=dcol?dcol.name:"Data";
-  // 2. Fecha / Estado opcionales: usa el nombre interno real si existe; si no, intenta crear
-  const fcol=findBy(c=>norm(c.displayName)==="fecha"||c.name==="Fecha");
-  const ecol=findBy(c=>norm(c.displayName)==="estado"||c.name==="Estado");
-  SP_COLS[t]={d:SP_DCOL[t], f:fcol?fcol.name:null, e:ecol?ecol.name:null};
-  if(!fcol){ try{ await gfetch(`/sites/${site}/lists/${lid}/columns`,"POST",{name:"Fecha",text:{}}); SP_COLS[t].f="Fecha"; }catch(e){} }
-  if(!ecol){ try{ await gfetch(`/sites/${site}/lists/${lid}/columns`,"POST",{name:"Estado",text:{}}); SP_COLS[t].e="Estado"; }catch(e){} }
-}
-async function spEnsureList(t){ const site=await spSite();
-  if(SP_LIST[t]){ await spEnsureCols(site,SP_LIST[t],t); return SP_LIST[t]; }
-  const name=APP.ms.lists[t];
-  const all=await gfetch(`/sites/${site}/lists?$select=id,displayName,name&$top=200`);
-  SP_LISTNAMES=(all.value||[]).map(l=>l.displayName);
-  let hit=(all.value||[]).find(l=>l.displayName===name||l.name===name)
-        ||(all.value||[]).find(l=>norm(l.displayName)===norm(name)||norm(l.name)===norm(name));
-  if(hit){ SP_LIST[t]=hit.id; await spEnsureCols(site,hit.id,t); return hit.id; }
-  try{ const created=await gfetch(`/sites/${site}/lists`,"POST",{displayName:name,
-      columns:[{name:"Data",text:{allowMultipleLines:true}},{name:"Fecha",text:{}},{name:"Estado",text:{}}],
-      list:{template:"genericList"}}); SP_LIST[t]=created.id; await spEnsureCols(site,created.id,t); return created.id;
-  }catch(e){ throw new Error(`No encontré la lista "${name}". Existentes: ${SP_LISTNAMES.join(", ")||"(ninguna)"}. Crea esa lista o renómbrala.`); } }
-function spMerge(t,items){ const dcol=SP_DCOL[t]||"Data"; const map=SP_MAP[t]||new Map();
-  items.forEach(it=>{ const d=it.fields&&it.fields[dcol]; if(!d) return; let rec; try{rec=JSON.parse(d);}catch{return;}
-    map.set(rec.id,{spId:it.id,hash:d}); }); SP_MAP[t]=map; }
-async function spPages(t,query){ const site=await spSite(); const lid=await spEnsureList(t);
-  let url=`/sites/${site}/lists/${lid}/items?$expand=fields&$top=500${query?("&"+query):""}`;
-  const items=[]; while(url){ const page=await gfetch(url.replace(GBASE,""),"GET",null,false,PREFER_NX);
-    (page.value||[]).forEach(x=>items.push(x)); url=page["@odata.nextLink"]||null; } return items; }
-function spParse(t,items){ const dcol=SP_DCOL[t]||"Data";
-  return items.map(it=>{ try{return JSON.parse(it.fields[dcol]);}catch{return null;} }).filter(Boolean); }
-const ListStore={
-  async read(t){ const items=await spPages(t,""); spMerge(t,items); return spParse(t,items); },
-  async readDesde(t,since){ await spEnsureList(t); const c=SP_COLS[t]||{};
-    if(!c.f) return (await this.read(t)).filter(r=>recFecha(r)>=since);
-    try{ const items=await spPages(t,`$filter=fields/${c.f} ge '${since}'`); spMerge(t,items); return spParse(t,items); }
-    catch(e){ return (await this.read(t)).filter(r=>recFecha(r)>=since); } },
-  async readRango(t,desde,hasta){ await spEnsureList(t); const c=SP_COLS[t]||{};
-    if(!c.f) return (await this.read(t)).filter(r=>recFecha(r)>=desde&&recFecha(r)<hasta);
-    try{ const items=await spPages(t,`$filter=fields/${c.f} ge '${desde}' and fields/${c.f} lt '${hasta}'`); spMerge(t,items); return spParse(t,items); }
-    catch(e){ return (await this.read(t)).filter(r=>recFecha(r)>=desde&&recFecha(r)<hasta); } },
-  async write(t,arr){ const site=await spSite(); const lid=await spEnsureList(t); const c=SP_COLS[t]||{d:"Data"};
-    if(!SP_MAP[t]) await this.read(t); const map=SP_MAP[t]||new Map();
-    for(const rec of arr){ const j=JSON.stringify(rec); const m=map.get(rec.id);
-      const full={Title:String(rec.Codigo||rec.id||"").slice(0,255)}; full[c.d||"Data"]=j;
-      if(c.f) full[c.f]=recFecha(rec); if(c.e) full[c.e]=recEstado(rec);
-      const basico={Title:full.Title}; basico[c.d||"Data"]=j;
-      if(!m){ let cr; try{ cr=await gfetch(`/sites/${site}/lists/${lid}/items`,"POST",{fields:full}); }
-          catch(e){ cr=await gfetch(`/sites/${site}/lists/${lid}/items`,"POST",{fields:basico}); }
-        map.set(rec.id,{spId:cr.id,hash:j}); }
-      else if(m.hash!==j){ try{ await gfetch(`/sites/${site}/lists/${lid}/items/${m.spId}/fields`,"PATCH",full); }
-          catch(e){ await gfetch(`/sites/${site}/lists/${lid}/items/${m.spId}/fields`,"PATCH",basico); } m.hash=j; } }
-    SP_MAP[t]=map; },
-  async remove(t,id){ const site=await spSite(); const lid=await spEnsureList(t); const dcol=SP_DCOL[t]||"Data";
-    const items=await spPages(t,""); let n=0;
-    for(const it of items){ let r; try{ r=JSON.parse(it.fields[dcol]); }catch{ continue; }
-      if(r && (r.id===id || r.Codigo===id)){ await gfetch(`/sites/${site}/lists/${lid}/items/${it.id}`,"DELETE"); n++; } }
-    if(SP_MAP[t]) SP_MAP[t].delete(id);
-    if(!n) throw new Error("No se encontró ese registro en la lista (quizá ya estaba borrado)."); }
-};
-async function migrarAListas(){ if(localStorage.getItem("pp_lists_migrated2")) return;
-  for(const t of LIST_TABLES){ try{ await spEnsureList(t); const cur=await ListStore.read(t);
-    if(!cur.length){ let old=[]; try{ old=await GraphStore.read(t); }catch{} if(Array.isArray(old)&&old.length) await ListStore.write(t,old); }
-  }catch(e){} } localStorage.setItem("pp_lists_migrated2","1"); }
 const hoyISO=()=>new Date().toISOString().slice(0,10);
 const desdeDias=n=>{ const d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); };
 const Store = {
@@ -729,8 +615,8 @@ function Login({onLogin}){
   return <div className="login">
     <div className="sun"></div><div className="wave"></div>
     <div className="lcard">
-      <div className="loginlogo"><img src={LOGO_B} alt="WAO Beach Venao"/></div>
-      <div className="ltag">Gestión operativa · Playa Venao</div>
+      <div className="loginlogo"><img src={LOGO_B} alt="WAO HOTELS - ILD's"/></div>
+      <div className="ltag">Inspección de Lista Diaria · WAO Hotels</div>
       <select className="lsel" value={name} onChange={e=>setName(e.target.value)}>
         <option value="">Selecciona tu nombre…</option>
         {all.map(u=><option key={u.id} value={u.nombre}>{u.nombre}</option>)}</select>
@@ -765,7 +651,7 @@ function Home({user,go,counts}){
         {counts[x.id]>0 && <span className="badge">{counts[x.id]} pendiente{counts[x.id]>1?"s":""}</span>}
       </button>)}
     </div>
-    <div className="ver">{APP.version} · Modo {MODE==="graph"?"en vivo (SharePoint)":"local (demo)"}</div>
+    <div className="ver">{APP.version} · Modo {MODE==="graph"?"en vivo (Google Drive)":"local (demo)"}</div>
   </div>;
 }
 
@@ -1280,7 +1166,7 @@ function LocalidadesEditor({toast,onSave}){
   return <div>
     <div className="card"><h3>📍 Localidades / sedes</h3>
       <div className="hint">Define las sedes de WAO. Quien registra un ILD elige a qué localidad pertenece, y los reportes se filtran por localidad.</div>
-      <div className="row" style={{marginTop:10}}><input className="inp" style={{flex:1}} value={nv} onChange={e=>setNv(e.target.value)} placeholder="Ej. WAO Beach Venao"/>
+      <div className="row" style={{marginTop:10}}><input className="inp" style={{flex:1}} value={nv} onChange={e=>setNv(e.target.value)} placeholder="Ej. WAO HOTELS - ILD's"/>
         <button className="btn ocean" onClick={add}>Agregar</button></div>
       <div style={{marginTop:12}}>{LOCALIDADES.map(l=><div className="kv" key={l}><span><b style={{color:"var(--ink)"}}>{l}</b></span>
         <button className="btn red" style={{padding:"6px 10px"}} onClick={()=>del(l)}>🗑</button></div>)}
@@ -1639,534 +1525,13 @@ function Tablero({tipo}){
   </div>;
 }
 
-/* ===== COMPRAS (campos exactos del Form de Requerimiento de Compra No Operacional) ===== */
-function Compras({user,toast,setFoto}){
-  const chief=gestionaModulo(user,'compras');
-  const canGG=esGD(user)||user.rol==='gerencia';
-  const [tab,setTab]=useState("nueva"); const [rows,setRows]=useState([]); const [modal,setModal]=useState(null);
-  const [gFiltro,setGFiltro]=useState("todas");
-  const load=async()=>setRows(await Store.read("Compras")); useEffect(()=>{load();},[]);
-  const vacio={Area:DEPTS[0],TiempoCompra:TIEMPO_COMPRA[1],TipoCompra:TIPO_COMPRA[0],FechaNecesidad:"",
-    Presupuesto:"",Justificacion:"",Cantidad:"",Unidad:UNIDADES[0],Modelo:"",Descripcion:"",Proveedores:""};
-  const [f,setF]=useState(vacio); const [fotos,setFotos]=useState([]); const [busy,setBusy]=useState(false);
-  const ch=(k,v)=>setF(s=>({...s,[k]:v}));
-  async function crear(){
-    for(const [k,lbl] of [["Area","Área"],["TiempoCompra","Tiempo de compra"],["TipoCompra","Tipo de compra"],
-      ["FechaNecesidad","¿Para cuándo la necesitas?"],["Presupuesto","Presupuesto"],["Justificacion","Justificación"],
-      ["Cantidad","Cantidad"],["Unidad","Unidad"],["Modelo","Modelo"],["Descripcion","Descripción"],["Proveedores","Posibles proveedores"]])
-      if(!String(f[k]).trim()){ toast("Falta: "+lbl); return; }
-    if(!fotos.length){ toast("Falta la foto del producto"); return; }
-    if(busy) return; setBusy(true);
-    try{
-      const arr=await Store.read("Compras"); const Codigo=nextCode("COM",arr);
-      const fotosC=await subirFotos(fotos,`COM_${Codigo}`,Codigo);
-      const nuevo={Codigo,id:gid(),FechaSolicitud:nowISO(),Solicitante:user.nombre,...f,
-        Fotos:fotosC,
-        Estado:"Solicitado",FechaTentativa:"",Aprobador:"",FechaAprob:"",Comentario:"",
-        EnviadoGG:"No",AprobadorGG:"",FechaGG:"",ComentarioGG:"",ActaEntrega:"",ComentarioActa:"",
-        FechaEntrega:"",FechaCierre:"",EncuestaCal:"",EncuestaComentario:"",FechaEncuesta:""};
-      await Store.write("Compras",[nuevo,...arr]); toast("Solicitud creada: "+Codigo);
-      setF(vacio); setFotos([]); load(); setTab("mias");
-    } finally { setBusy(false); }
-  }
-  async function apply(code,patch){ const arr=await Store.read("Compras");
-    await Store.write("Compras",arr.map(x=>x.Codigo===code?{...x,...patch}:x)); load(); }
-  const mias=rows.filter(r=>r.Solicitante===user.nombre);
-  const verGestion=puede(user,'compras.gestion')||canGG;
-  const esChiefCompras=puede(user,'compras.gestion');
-  const gestionRows=esChiefCompras?rows:rows.filter(r=>r.Estado==="En Gerencia");
-  const ABIERTAS_C=["Solicitado","En Gerencia","En compra","Listo para entregar"];
-  const diasDe=r=>Math.floor((Date.now()-new Date(r.FechaSolicitud))/86400000);
-  const porFecha=(a,b)=>new Date(a.FechaSolicitud)-new Date(b.FechaSolicitud);
-  let gView=gestionRows;
-  if(gFiltro==="pendientes") gView=gestionRows.filter(r=>ABIERTAS_C.includes(r.Estado)).sort(porFecha);
-  else if(gFiltro==="antiguas") gView=gestionRows.filter(r=>ABIERTAS_C.includes(r.Estado)&&diasDe(r)>=7).sort(porFecha);
-  return <div>
-    <h1 className="h1">Compras</h1><p className="sub">Requerimiento de compra no operacional.</p>
-    <div className="seg">
-      <button className={tab==="nueva"?"on":""} onClick={()=>setTab("nueva")}>Nueva</button>
-      <button className={tab==="mias"?"on":""} onClick={()=>{setTab("mias");load();}}>Mis solicitudes</button>
-      {verGestion&&<button className={tab==="gestion"?"on":""} onClick={()=>{setTab("gestion");load();}}>Gestión {esDev(user)?"(todo)":esChiefCompras?"":"(Gerencia)"}</button>}
-      {puede(user,'compras.tablero')&&<button className={tab==="tablero"?"on":""} onClick={()=>{setTab("tablero");load();}}>📊 Tablero</button>}
-    </div>
-    {tab==="nueva" && <div className="card">
-      <Field label="Nombres y apellidos"><input className="inp" value={user.nombre} disabled/></Field>
-      <Field label="Área" req><select className="inp" value={f.Area} onChange={e=>ch("Area",e.target.value)}>{DEPTS.map(d=><option key={d}>{d}</option>)}</select></Field>
-      <Field label="Tiempo de compra" req><select className="inp" value={f.TiempoCompra} onChange={e=>ch("TiempoCompra",e.target.value)}>{TIEMPO_COMPRA.map(d=><option key={d}>{d}</option>)}</select></Field>
-      <Field label="Tipo de compra" req><select className="inp" value={f.TipoCompra} onChange={e=>ch("TipoCompra",e.target.value)}>{TIPO_COMPRA.map(d=><option key={d}>{d}</option>)}</select></Field>
-      <Field label="¿Para cuándo necesitas la compra?" req hint="Fecha de vencimiento / fecha en que la necesitas."><input type="date" className="inp" value={f.FechaNecesidad} onChange={e=>ch("FechaNecesidad",e.target.value)}/></Field>
-      <Field label="Presupuesto referencial" req><input className="inp" inputMode="decimal" value={f.Presupuesto} onChange={e=>ch("Presupuesto",e.target.value)} placeholder="Ej. 25000"/></Field>
-      <Field label="Justificación del requerimiento" req><textarea className="inp" value={f.Justificacion} onChange={e=>ch("Justificacion",e.target.value)}/></Field>
-      <div className="row"><div style={{flex:1}}><Field label="Cantidad" req><input className="inp" inputMode="decimal" value={f.Cantidad} onChange={e=>ch("Cantidad",e.target.value)}/></Field></div>
-        <div style={{flex:1}}><Field label="Unidad de medida" req><select className="inp" value={f.Unidad} onChange={e=>ch("Unidad",e.target.value)}>{UNIDADES.map(d=><option key={d}>{d}</option>)}</select></Field></div></div>
-      <Field label="Modelo" req><input className="inp" value={f.Modelo} onChange={e=>ch("Modelo",e.target.value)} placeholder="Ej. Computadora"/></Field>
-      <Field label="Descripción del requerimiento (marca, serie, proveedor, detalles)" req><textarea className="inp" value={f.Descripcion} onChange={e=>ch("Descripcion",e.target.value)}/></Field>
-      <PhotoField fotos={fotos} setFotos={setFotos} label="Foto del producto" req setFoto={setFoto}/>
-      <Field label="Posibles proveedores" req><input className="inp" value={f.Proveedores} onChange={e=>ch("Proveedores",e.target.value)} placeholder="Ej. Super Paco"/></Field>
-      <button className="btn primary block" disabled={busy} onClick={crear}>{busy?"Enviando…":"Crear solicitud"}</button></div>}
-    {tab==="mias" && <Listado items={mias} empty="Aún no tienes solicitudes"
-      render={r=><ComprasCard r={r} chief={false} canGG={false} onAction={(t)=>setModal({t,item:r})}/>}/>}
-    {tab==="gestion" && <>
-      <div className="seg" style={{flexWrap:"wrap"}}>
-        <button className={gFiltro==="todas"?"on":""} onClick={()=>setGFiltro("todas")}>Todas</button>
-        <button className={gFiltro==="pendientes"?"on":""} onClick={()=>setGFiltro("pendientes")}>⏳ Pendientes</button>
-        <button className={gFiltro==="antiguas"?"on":""} onClick={()=>setGFiltro("antiguas")}>📅 Antigüedad (+7 días)</button>
-      </div>
-      <div className="kcount">{gView.length} solicitud(es){gFiltro!=="todas"?" · ordenadas de la más antigua a la más reciente":""}</div>
-      <Listado items={gView} empty={esChiefCompras?"No hay solicitudes":"No hay solicitudes pendientes de Gerencia"}
-        render={r=><ComprasCard r={r} chief={chief} canGG={canGG} dias={ABIERTAS_C.includes(r.Estado)?diasDe(r):null} onAction={(t)=>setModal({t,item:r})}/>}/></>}
-    {tab==="tablero" && <Tablero tipo="Compras"/>}
-    {modal && <ComprasModal modal={modal} user={user} onClose={()=>setModal(null)} apply={apply} toast={toast} setFoto={setFoto}/>}
-  </div>;
-}
-function actaCompra(item){
-  const f=(d)=>d?new Date(d).toLocaleString('es-EC'):'—';
-  const conf=item.ActaEntrega||'Recibido conforme';
-  const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-  const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Acta ${esc(item.Codigo)}</title>
-  <style>body{font-family:'Segoe UI',Arial,sans-serif;color:#1b2a32;max-width:720px;margin:28px auto;padding:0 26px;line-height:1.55}
-  h1{font-size:21px;margin:8px 0 16px}.tag{display:inline-block;background:#fbeec4;color:#7a5b00;padding:4px 12px;border-radius:7px;font-weight:700;font-size:13px}
-  .r{margin:3px 0}b{color:#0b3b46}.firmas{margin-top:22px}.firma{margin:10px 0;padding-left:12px;border-left:3px solid #0b6b7a}
-  .meta{color:#5b6b72;font-size:13px}p{margin:12px 0}</style></head><body>
-  <div class="tag">${esc(conf)}</div>
-  <h1>Solicitud de compras No. ${esc(item.Codigo)} - Acta de Entrega</h1>
-  <p>Con la presente acta HOTELERA PARAISO S.A. hace la entrega de lo siguiente:</p>
-  <div class="r"><b>Tipo de Compra:</b> ${esc(item.TipoCompra)}</div>
-  <div class="r"><b>Justificación del requerimiento:</b> ${esc(item.Justificacion)}</div>
-  <div class="r"><b>Cantidad:</b> ${esc(item.Cantidad)}</div>
-  <div class="r"><b>Medida:</b> ${esc(item.Unidad)}</div>
-  <div class="r"><b>Modelo:</b> ${esc(item.Modelo)}</div>
-  <div class="r"><b>Descripción del requerimiento:</b> ${esc(item.Descripcion)}</div>
-  <p>El colaborador manifiesta que se entregó el requerimiento en perfectas condiciones, y será utilizada dentro de la jornada laboral establecidos por la empresa.</p>
-  <p>En caso de daño o pérdida o falta de devolución del equipo, el colaborador autoriza el descuento de valores de reposición en sus haberes pendientes.</p>
-  ${item.ComentarioActa?`<p class="meta"><b>Observaciones:</b> ${esc(item.ComentarioActa)}</p>`:''}
-  <div class="firmas"><b>Estado final: ${esc(conf)}</b>
-    <div class="firma"><b>Recibido por (área solicitante):</b> ${esc(item.Receptor||item.Solicitante)}<br><span class="meta">${f(item.FechaCierre)}</span></div>
-    ${item.Aprobador?`<div class="firma"><b>Aprobó / entregó:</b> ${esc(item.Aprobador)}<br><span class="meta">${f(item.FechaAprob)}</span></div>`:''}
-    <div class="firma"><b>Solicitado por:</b> ${esc(item.Solicitante)}<br><span class="meta">${f(item.FechaSolicitud)}</span></div>
-  </div>
-  </body></html>`;
-  const w=window.open("","_blank");
-  if(!w){ alert("Permite ventanas emergentes para exportar el acta en PDF."); return; }
-  w.document.write(html); w.document.close(); w.focus();
-  setTimeout(function(){ try{ w.print(); }catch(e){} },350);
-}
-function ComprasCard({r,chief,canGG,onAction,dias}){
-  return <div className="item">
-    <div className="top"><div><div className="code">{r.Codigo}{dias!=null?<span style={{marginLeft:8,fontSize:11,color:dias>=7?"var(--red)":"var(--amber)",fontWeight:700}}>⏳ hace {dias}d</span>:null}</div><div className="ttl">{r.Modelo}</div>
-      <div className="meta">{r.Cantidad} {r.Unidad} · {r.Area} · {r.Solicitante}</div></div>
-      <Pill estado={r.Estado} overdue={isOverdue(r)}/></div>
-    <div className="meta" style={{marginTop:6}}>🗓️ Necesaria: {fmtDate(r.FechaNecesidad)}{r.FechaTentativa?` · 📅 Tentativa: ${fmtDate(r.FechaTentativa)}`:""}</div>
-    <div className="acts">
-      <button className="btn ghost" onClick={()=>onAction("ver")}>Ver</button>
-      {chief && r.Estado==="Solicitado" && <>
-        <button className="btn green" onClick={()=>onAction("aprobar")}>Aprobar</button>
-        <button className="btn ocean" onClick={()=>onAction("enviarGG")}>Enviar a Gerencia</button>
-        <button className="btn red" onClick={()=>onAction("rechazar")}>Rechazar</button></>}
-      {canGG && r.Estado==="En Gerencia" && <>
-        <button className="btn green" onClick={()=>onAction("aprobarGG")}>Aprobar (GG)</button>
-        <button className="btn red" onClick={()=>onAction("rechazarGG")}>Rechazar (GG)</button></>}
-      {chief && r.Estado==="En compra" && <button className="btn ocean" onClick={()=>onAction("listo")}>Marcar listo</button>}
-      {!chief && r.Estado==="Listo para entregar" && <button className="btn primary" onClick={()=>onAction("recibir")}>Confirmar recibido</button>}
-      {chief && ["En compra","Listo para entregar"].includes(r.Estado) && <>
-        <button className="btn amber" onClick={()=>onAction("reprogramar")}>Reprogramar fecha</button>
-        <button className="btn red" onClick={()=>onAction("baja")}>Dar de baja</button></>}
-      {["Entregado","Cerrada"].includes(r.Estado) && <button className="btn ocean" onClick={()=>actaCompra(r)}>📄 Acta (PDF)</button>}
-      {!chief && r.Estado==="Entregado" && !r.EncuestaCal && <button className="btn primary" onClick={()=>onAction("encuesta")}>Calificar</button>}
-    </div></div>;
-}
-function ComprasModal({modal,user,onClose,apply,toast,setFoto}){
-  const {t,item}=modal;
-  const [com,setCom]=useState(""); const [fecha,setFecha]=useState(item.FechaTentativa||""); const [cal,setCal]=useState(0);
-  const [calT,setCalT]=useState(0); const [calC,setCalC]=useState(0);
-  const [acta,setActa]=useState("Recibido conforme");
-  const MSG_PRESU="La compra se encuentra aprobada, pero está sujeta a disponibilidad de presupuesto.";
-  async function go(){
-    if(t==="aprobar"){ await apply(item.Codigo,{Estado:"En compra",Aprobador:user.nombre,FechaAprob:nowISO(),Comentario:com,FechaTentativa:fecha}); toast(MSG_PRESU); }
-    else if(t==="enviarGG"){ await apply(item.Codigo,{Estado:"En Gerencia",EnviadoGG:"Si",Aprobador:user.nombre,FechaAprob:nowISO(),Comentario:com}); toast("Enviada a Gerencia"); }
-    else if(t==="aprobarGG"){ await apply(item.Codigo,{Estado:"En compra",AprobadorGG:user.nombre,FechaGG:nowISO(),ComentarioGG:com}); toast(MSG_PRESU); }
-    else if(t==="rechazar"){ if(!com.trim()){toast("El motivo es obligatorio");return;} await apply(item.Codigo,{Estado:"Rechazada",Aprobador:user.nombre,FechaAprob:nowISO(),Comentario:com}); toast("Rechazada"); }
-    else if(t==="rechazarGG"){ if(!com.trim()){toast("El motivo es obligatorio");return;} await apply(item.Codigo,{Estado:"Rechazada",AprobadorGG:user.nombre,FechaGG:nowISO(),ComentarioGG:com}); toast("Rechazada por Gerencia"); }
-    else if(t==="reprogramar"){ if(!fecha){toast("Indica la nueva fecha de entrega");return;} await apply(item.Codigo,{FechaTentativa:fecha,Comentario:com?("Reprogramada — "+com):item.Comentario,Reprogramada:"Si"}); toast("Fecha reprogramada"); }
-    else if(t==="baja"){ if(!com.trim()){toast("Indica el motivo de la baja");return;} await apply(item.Codigo,{Estado:"Baja por presupuesto",Comentario:com,FechaCierre:nowISO()}); toast("Solicitud dada de baja"); }
-    else if(t==="listo"){ await apply(item.Codigo,{Estado:"Listo para entregar",FechaEntrega:nowISO()}); toast("Listo para entregar"); }
-    else if(t==="recibir"){ await apply(item.Codigo,{Estado:"Entregado",ActaEntrega:acta,ComentarioActa:com,Receptor:user.nombre,FechaCierre:nowISO()}); toast("Recibido registrado · acta generada"); }
-    else if(t==="encuesta"){ if(!calT||!calC){toast("Califica el tiempo de entrega y la calidad");return;}
-      await apply(item.Codigo,{Estado:"Cerrada",EncuestaTiempo:calT,EncuestaCalidad:calC,EncuestaCal:Math.round((calT+calC)/2),EncuestaComentario:com,FechaEncuesta:nowISO()}); toast("¡Gracias por calificar!"); }
-    onClose();
-  }
-  const titles={ver:"Detalle de la solicitud",aprobar:"Aprobar (Compras)",enviarGG:"Enviar a Gerencia General",aprobarGG:"Aprobar (Gerencia)",rechazar:"Rechazar",rechazarGG:"Rechazar (Gerencia)",reprogramar:"Reprogramar fecha de entrega",baja:"Dar de baja por presupuesto",listo:"Marcar listo",recibir:"Confirmar recibido · Acta de entrega",encuesta:"Calificar el servicio"};
-  const needCom = t.startsWith("rechazar")||t==="baja";
-  return <Modal title={titles[t]} onClose={onClose}>
-    {t==="ver" ? <div>
-      {[["Código",item.Codigo],["Solicitante",item.Solicitante],["Área",item.Area],["Tiempo de compra",item.TiempoCompra],
-        ["Tipo de compra",item.TipoCompra],["Necesaria para",fmtDate(item.FechaNecesidad)],["Presupuesto",item.Presupuesto],
-        ["Cantidad",`${item.Cantidad} ${item.Unidad}`],["Modelo",item.Modelo],["Descripción",item.Descripcion],
-        ["Justificación",item.Justificacion],["Proveedores",item.Proveedores],["Estado",item.Estado],
-        ["Tentativa entrega",fmtDate(item.FechaTentativa)],["Aprobó Compras",item.Aprobador||"—"],["Comentario",item.Comentario||"—"],
-        ["Decisión Gerencia",item.AprobadorGG?`${item.AprobadorGG} · ${item.ComentarioGG||""}`:"—"],
-        ["Acta",item.ActaEntrega||"—"],["Recibió",item.Receptor||"—"],["Calificación",item.EncuestaCal?item.EncuestaCal+"/10":"—"]].map(([k,v])=>
-        <div className="kv" key={k}><b>{k}</b><span style={{textAlign:"right",maxWidth:"62%"}}>{v}</span></div>)}
-      {(item.Fotos||[]).length>0 && <><h3 style={{margin:"12px 0 6px"}}>📷 Foto</h3>
-        <div className="fgrid">{item.Fotos.map((f,i)=><SpImg key={i} foto={f} idx={i+1} onClick={setFoto}/>)}</div></>}
-      {["Entregado","Cerrada"].includes(item.Estado) && <button className="btn ocean block" style={{marginTop:12}} onClick={()=>actaCompra(item)}>📄 Exportar Acta de Entrega (PDF)</button>}
-    </div> : <div>
-      {(t==="aprobar"||t==="reprogramar") && <Field label="Fecha tentativa de entrega" req={t==="reprogramar"} hint="La asigna el Coordinador de Compras. Vacía = no se marca como vencida."><input type="date" className="inp" value={fecha} onChange={e=>setFecha(e.target.value)}/></Field>}
-      {t==="recibir" && <><Field label="Resultado de la entrega"><select className="inp" value={acta} onChange={e=>setActa(e.target.value)}><option>Recibido conforme</option><option>Recibido con observaciones</option></select></Field>
-        <div className="hint">Al confirmar, el ítem queda como <b>Entregado</b> y podrás exportar el Acta en PDF.</div></>}
-      {t==="encuesta" && <><Field label="Califica el tiempo de entrega (1-10)"><Stars value={calT} onChange={setCalT}/></Field>
-        <Field label="Califica la calidad de la compra (1-10)"><Stars value={calC} onChange={setCalC}/></Field></>}
-      <Field label={t.startsWith("rechazar")?"Motivo del rechazo":t==="baja"?"Motivo de la baja (p. ej. falta de presupuesto)":t==="reprogramar"?"Motivo de la reprogramación (opcional)":"Comentario"} req={needCom}><textarea className="inp" value={com} onChange={e=>setCom(e.target.value)}/></Field>
-      <div className="row end"><button className="btn ghost" onClick={onClose}>Cancelar</button>
-        <button className={"btn "+(needCom?"red":"primary")} onClick={go}>Confirmar</button></div></div>}
-  </Modal>;
-}
-
-/* ===== TICKETS (Sistemas / Mantenimiento) con campos exactos del Form ===== */
-function Tickets({tipo,user,toast,setFoto}){
-  const isSis=tipo==="Sistemas";
-  const chief=gestionaModulo(user,tipo.toLowerCase());
-  const [tab,setTab]=useState("nuevo"); const [rows,setRows]=useState([]); const [modal,setModal]=useState(null);
-  const load=async()=>setRows(await Store.read(tipo)); useEffect(()=>{load();},[]);
-  const hoy=new Date().toISOString().slice(0,10);
-  const vacioSis={Departamento:DEPTS_SIS[0],Urgencia:URGENCIA_SIS[1],Titulo:"",Descripcion:""};
-  const vacioMto={Departamento:DEPTS[0],FechaSolicitud:hoy,TipoSolicitud:"Normal",Descripcion:""};
-  const [f,setF]=useState(isSis?vacioSis:vacioMto); const [fotos,setFotos]=useState([]); const [busy,setBusy]=useState(false);
-  const ch=(k,v)=>setF(s=>({...s,[k]:v}));
-  async function crear(){
-    if(isSis){ if(!f.Titulo.trim()){toast("Falta el título de la tarea");return;} if(!f.Descripcion.trim()){toast("Falta la descripción");return;} }
-    else { if(!f.Descripcion.trim()){toast("Falta la descripción de la novedad");return;} }
-    if(busy) return; setBusy(true);
-    try{
-      const arr=await Store.read(tipo); const Codigo=nextCode(isSis?"SIS":"MTO",arr);
-      const fotosT=await subirFotos(fotos,`${isSis?'SIS':'MTO'}_${Codigo}`,Codigo);
-      const base={Codigo,id:gid(),FechaCreacion:nowISO(),Solicitante:user.nombre,...f,
-        Fotos:fotosT,
-        Estado:"Nuevo",FechaTentativa:"",Asignado:"",ComentarioSoporte:"",FechaConcluido:"",
-        EncuestaCal:"",EncuestaComentario:"",FechaEncuesta:""};
-      await Store.write(tipo,[base,...arr]); toast("Ticket creado: "+Codigo);
-      setF(isSis?vacioSis:vacioMto); setFotos([]); load(); setTab("mios");
-    } finally { setBusy(false); }
-  }
-  async function apply(code,patch){ const arr=await Store.read(tipo);
-    await Store.write(tipo,arr.map(x=>x.Codigo===code?{...x,...patch}:x)); load(); }
-  const mios=rows.filter(r=>r.Solicitante===user.nombre);
-  const equipo=equipoDe(user); const verEquipo=user.rol==='aprobador' && equipo.length>0;
-  const delEquipo=rows.filter(r=>equipo.includes(r.Solicitante));
-  const asignadas=rows.filter(r=>r.Asignado===user.nombre && !isSis && !["Cerrado","Rechazado"].includes(r.Estado));
-  const verTareas=!isSis && ildAreasDe(user).includes('Mantenimiento') && user.rol==='colaborador';
-  const [soloHoy,setSoloHoy]=useState(false); const [gHoy,setGHoy]=useState(false);
-  const hoyStr=new Date().toISOString().slice(0,10);
-  const tareasMostrar=soloHoy?asignadas.filter(r=>(r.FechaTentativa||"").slice(0,10)===hoyStr):asignadas;
-  const gestionRows=gHoy?rows.filter(r=>(r.FechaTentativa||"").slice(0,10)===hoyStr):rows;
-  return <div>
-    <h1 className="h1">{isSis?"Soporte de Sistemas":"Mantenimiento"}</h1>
-    <p className="sub">{isSis?"Requerimiento de TI.":"Requerimiento de mantenimiento."}</p>
-    <div className="seg" style={{flexWrap:"wrap"}}>
-      <button className={tab==="nuevo"?"on":""} onClick={()=>setTab("nuevo")}>Nuevo</button>
-      <button className={tab==="mios"?"on":""} onClick={()=>{setTab("mios");load();}}>Mis tickets</button>
-      {verTareas&&<button className={tab==="tareas"?"on":""} onClick={()=>{setTab("tareas");load();}}>Mis tareas{asignadas.length?` (${asignadas.length})`:""}</button>}
-      {verEquipo&&<button className={tab==="equipo"?"on":""} onClick={()=>{setTab("equipo");load();}}>Mi equipo</button>}
-      {puede(user,`${tipo.toLowerCase()}.gestion`)&&<button className={tab==="gestion"?"on":""} onClick={()=>{setTab("gestion");load();}}>Gestión {esDev(user)?"(todo)":""}</button>}
-      {puede(user,`${tipo.toLowerCase()}.tablero`)&&<button className={tab==="tablero"?"on":""} onClick={()=>{setTab("tablero");load();}}>📊 Tablero</button>}
-    </div>
-    {tab==="nuevo" && <div className="card">
-      <Field label={isSis?"Nombre del solicitante":"Solicitante"}><input className="inp" value={user.nombre} disabled/></Field>
-      <Field label="Departamento" req><select className="inp" value={f.Departamento} onChange={e=>ch("Departamento",e.target.value)}>{(isSis?DEPTS_SIS:DEPTS).map(d=><option key={d}>{d}</option>)}</select></Field>
-      {isSis ? <>
-        <Field label="Urgencia / Prioridad" req><select className="inp" value={f.Urgencia} onChange={e=>ch("Urgencia",e.target.value)}>{URGENCIA_SIS.map(d=><option key={d}>{d}</option>)}</select></Field>
-        <Field label="Título de la tarea" req><input className="inp" value={f.Titulo} onChange={e=>ch("Titulo",e.target.value)} placeholder="Ej. Creación de usuario"/></Field>
-        <Field label="Descripción del problema o solicitud" req hint="Describe con el mayor detalle posible."><textarea className="inp" value={f.Descripcion} onChange={e=>ch("Descripcion",e.target.value)}/></Field>
-        <PhotoField fotos={fotos} setFotos={setFotos} label="Adjuntos (opcional)" setFoto={setFoto}/>
-      </> : <>
-        <Field label="Fecha de solicitud" req><input type="date" className="inp" value={f.FechaSolicitud} onChange={e=>ch("FechaSolicitud",e.target.value)}/></Field>
-        <Field label="Tipo de solicitud" req><select className="inp" value={f.TipoSolicitud} onChange={e=>ch("TipoSolicitud",e.target.value)}><option>Normal</option><option>Urgente</option></select></Field>
-        <Field label="Descripción de la novedad" req><textarea className="inp" value={f.Descripcion} onChange={e=>ch("Descripcion",e.target.value)} placeholder="Describe la novedad…"/></Field>
-        <PhotoField fotos={fotos} setFotos={setFotos} label="Imagen de la novedad (opcional)" setFoto={setFoto}/>
-      </>}
-      <button className="btn primary block" disabled={busy} onClick={crear}>{busy?"Enviando…":"Crear ticket"}</button></div>}
-    {tab==="mios" && <Listado items={mios} empty="Aún no tienes tickets" render={r=><TicketCard r={r} isSis={isSis} chief={false} onAction={(t)=>setModal({t,item:r})}/>}/>}
-    {tab==="equipo" && <Listado items={delEquipo} empty="Tu equipo aún no ha subido tickets" render={r=><TicketCard r={r} isSis={isSis} chief={false} onAction={(t)=>setModal({t,item:r})}/>}/>}
-    {tab==="tareas" && <div>
-      <div className="row" style={{margin:"0 0 12px",gap:8}}>
-        <button className={"btn "+(soloHoy?"ghost":"primary")} onClick={()=>setSoloHoy(false)}>Todas ({asignadas.length})</button>
-        <button className={"btn "+(soloHoy?"primary":"ghost")} onClick={()=>setSoloHoy(true)}>📅 Hoy ({asignadas.filter(r=>(r.FechaTentativa||"").slice(0,10)===hoyStr).length})</button></div>
-      <Listado items={tareasMostrar} empty={soloHoy?"No tienes tareas para hoy":"No tienes tareas asignadas"}
-        render={r=><TareaCard r={r} onAction={(t)=>setModal({t,item:r})}/>}/></div>}
-    {tab==="gestion" && <div>
-      <div className="row" style={{margin:"0 0 12px",gap:8,flexWrap:"wrap"}}>
-        <button className={"btn "+(gHoy?"ghost":"primary")} onClick={()=>setGHoy(false)}>Todas ({rows.length})</button>
-        <button className={"btn "+(gHoy?"primary":"ghost")} onClick={()=>setGHoy(true)}>📅 Hoy ({rows.filter(r=>(r.FechaTentativa||"").slice(0,10)===hoyStr).length})</button>
-        <button className="btn ocean" onClick={()=>{ if(!exportXLSX(gestionRows,tipo,`${tipo}_${gHoy?"Hoy_":""}PlayaParaiso`)) toast("No hay datos para exportar"); else toast("Exportando…"); }}>⬇️ Exportar</button></div>
-      <Listado items={gestionRows} empty="No hay tickets" render={r=><TicketCard r={r} isSis={isSis} chief={chief} equipo={equipo} onAction={(t)=>setModal({t,item:r})}/>}/></div>}
-    {tab==="tablero" && <Tablero tipo={tipo}/>}
-    {modal && <TicketModal tipo={tipo} isSis={isSis} modal={modal} user={user} equipo={equipo} onClose={()=>setModal(null)} apply={apply} toast={toast} setFoto={setFoto}/>}
-  </div>;
-}
-function TareaCard({r,onAction}){
-  const venc = r.FechaTentativa && (r.FechaTentativa||"").slice(0,10) < new Date().toISOString().slice(0,10) && !["Concluido","Cerrado"].includes(r.Estado);
-  return <div className="item">
-    <div className="top"><div><div className="code">{r.Codigo}</div><div className="ttl">{r.Descripcion}</div>
-      <div className="meta">{r.Departamento} · {r.TipoSolicitud} · solicitó: {r.Solicitante}</div></div>
-      <Pill estado={r.Estado} overdue={venc}/></div>
-    {r.FechaTentativa && <div className="meta" style={{marginTop:6}}>📅 Para: {fmtDate(r.FechaTentativa)}{venc?" · ⚠️ vencida":""}</div>}
-    {r.CierreCumplimiento && <div className="meta" style={{marginTop:4,fontWeight:700,color:r.CierreCumplimiento.includes("atraso")?"var(--coral)":"var(--green)"}}>{r.CierreCumplimiento}</div>}
-    <div className="acts">
-      <button className="btn ghost" onClick={()=>onAction("ver")}>Ver</button>
-      {!["Concluido","Cerrado"].includes(r.Estado) && <button className="btn green" onClick={()=>onAction("concluirTarea")}>✅ Concluir tarea</button>}
-    </div></div>;
-}
-function TicketCard({r,isSis,chief,equipo,onAction}){
-  const titulo=isSis?r.Titulo:r.Descripcion;
-  return <div className="item">
-    <div className="top"><div><div className="code">{r.Codigo}</div><div className="ttl">{titulo}</div>
-      <div className="meta">{r.Solicitante} · {r.Departamento} · {isSis?(r.Urgencia||"").split(" ")[0]:r.TipoSolicitud}</div></div>
-      <Pill estado={r.Estado} overdue={isOverdue(r)}/></div>
-    {r.FechaTentativa && <div className="meta" style={{marginTop:6}}>📅 {fmtDate(r.FechaTentativa)}</div>}
-    {r.Asignado && <div className="meta" style={{marginTop:4}}>👤 Asignado a: {r.Asignado}</div>}
-    {r.CierreCumplimiento && <div className="meta" style={{marginTop:4,fontWeight:700,color:r.CierreCumplimiento.includes("atraso")?"var(--coral)":"var(--green)"}}>{r.CierreCumplimiento}</div>}
-    <div className="acts">
-      <button className="btn ghost" onClick={()=>onAction("ver")}>Ver</button>
-      {chief && !isSis && !["Concluido","Cerrado","Rechazado"].includes(r.Estado) && <button className="btn ocean" onClick={()=>onAction("asignar")}>👤 Asignar tarea</button>}
-      {chief && isSis && ["Nuevo","Sin fecha asignada"].includes(r.Estado) && <button className="btn ocean" onClick={()=>onAction("tomar")}>Asignar fecha</button>}
-      {chief && r.Estado==="En proceso" && <button className="btn green" onClick={()=>onAction("concluir")}>Concluir</button>}
-      {chief && !["Concluido","Cerrado","Rechazado"].includes(r.Estado) && <button className="btn red" onClick={()=>onAction("rechazar")}>Rechazar</button>}
-      {!chief && r.Estado==="Concluido" && !r.EncuestaCal && <button className="btn primary" onClick={()=>onAction("encuesta")}>Calificar</button>}
-    </div></div>;
-}
-function TicketModal({tipo,isSis,modal,user,equipo,onClose,apply,toast,setFoto}){
-  const {t,item}=modal;
-  const opciones=(equipo&&equipo.length)?equipo:[];
-  const [com,setCom]=useState(""); const [fecha,setFecha]=useState(item.FechaTentativa||""); const [cal,setCal]=useState(0);
-  const [tecnico,setTecnico]=useState(item.Asignado||opciones[0]||""); const [fotos,setFotos]=useState([]); const [busy,setBusy]=useState(false);
-  function cumplimiento(){ if(!item.FechaTentativa) return "Concluida"; const lim=(item.FechaTentativa||"").slice(0,10);
-    return (new Date().toISOString().slice(0,10) <= lim) ? "Concluida a tiempo" : "Concluida con atraso"; }
-  async function go(){
-    if(t==="tomar"){ await apply(item.Codigo,{Estado:fecha?"En proceso":"Sin fecha asignada",Asignado:user.nombre,FechaTentativa:fecha}); toast(fecha?"En proceso":"Guardado sin fecha"); }
-    else if(t==="asignar"){ if(!tecnico){toast("Selecciona un técnico");return;} if(!fecha){toast("Indica la fecha límite de la tarea");return;}
-      await apply(item.Codigo,{Estado:"Asignada",Asignado:tecnico,FechaTentativa:fecha,ComentarioJefe:com});
-      await addNotif(tecnico,`Se te asignó la tarea de mantenimiento ${item.Codigo} (para el ${fmtDate(fecha)}).`,"",item.Codigo);
-      toast("Tarea asignada a "+tecnico); }
-    else if(t==="concluir"){ if(!com.trim()){toast("El comentario de cierre es obligatorio");return;} setBusy(true);
-      const fc=fotos.length?await subirFotos(fotos,`MTO_${item.Codigo}`,item.Codigo+"_cierre"):(item.FotosCierre||[]);
-      await apply(item.Codigo,{Estado:"Concluido",ComentarioSoporte:com,FechaConcluido:nowISO(),CierreCumplimiento:cumplimiento(),FotosCierre:fc}); toast("Concluido"); }
-    else if(t==="concluirTarea"){ if(!com.trim()){toast("Escribe un comentario de la tarea");return;}
-      if(!fotos.length){toast("Adjunta al menos una foto de la tarea concluida");return;} setBusy(true);
-      const fc=await subirFotos(fotos,`MTO_${item.Codigo}`,item.Codigo+"_cierre"); const cmp=cumplimiento();
-      await apply(item.Codigo,{Estado:"Concluido",ComentarioSoporte:com,FechaConcluido:nowISO(),CierreCumplimiento:cmp,FotosCierre:fc});
-      toast(cmp); }
-    else if(t==="rechazar"){ if(!com.trim()){toast("El motivo es obligatorio");return;} await apply(item.Codigo,{Estado:"Rechazado",ComentarioSoporte:com,Asignado:user.nombre,FechaConcluido:nowISO()}); toast("Rechazado"); }
-    else if(t==="encuesta"){ if(!cal){toast("Selecciona calificación");return;} await apply(item.Codigo,{Estado:"Cerrado",EncuestaCal:cal,EncuestaComentario:com,FechaEncuesta:nowISO()}); toast("¡Gracias por calificar!"); }
-    onClose();
-  }
-  const titles={ver:"Detalle del ticket",tomar:"Asignar fecha tentativa",asignar:"Asignar tarea al equipo",concluir:"Concluir ticket",concluirTarea:"Concluir tarea",rechazar:"Rechazar",encuesta:"Calificar el servicio"};
-  return <Modal title={titles[t]} onClose={onClose}>
-    {t==="ver" ? <div>
-      {[["Código",item.Codigo],["Solicitante",item.Solicitante],["Departamento",item.Departamento],
-        isSis?["Urgencia",item.Urgencia]:["Tipo",item.TipoSolicitud],
-        isSis?["Título",item.Titulo]:["Fecha solicitud",fmtDate(item.FechaSolicitud)],
-        ["Descripción",item.Descripcion],["Estado",item.Estado],["Fecha límite",fmtDate(item.FechaTentativa)],
-        ["Asignado",item.Asignado||"—"],["Cumplimiento",item.CierreCumplimiento||"—"],["Cierre",item.ComentarioSoporte||"—"],["Calificación",item.EncuestaCal?item.EncuestaCal+"/10":"—"]].map(([k,v])=>
-        <div className="kv" key={k}><b>{k}</b><span style={{textAlign:"right",maxWidth:"62%"}}>{v}</span></div>)}
-      {(item.Fotos||[]).length>0 && <><h3 style={{margin:"12px 0 6px"}}>📷 Adjuntos</h3>
-        <div className="fgrid">{item.Fotos.map((f,i)=><SpImg key={i} foto={f} idx={i+1} onClick={setFoto}/>)}</div></>}
-      {(item.FotosCierre||[]).length>0 && <><h3 style={{margin:"12px 0 6px"}}>📷 Fotos de cierre</h3>
-        <div className="fgrid">{item.FotosCierre.map((f,i)=><SpImg key={i} foto={f} idx={i+1} onClick={setFoto}/>)}</div></>}
-    </div> : <div>
-      {t==="asignar" && <><Field label="Técnico responsable" req><select className="inp" value={tecnico} onChange={e=>setTecnico(e.target.value)}>
-        {!opciones.length && <option value="">(sin miembros de equipo)</option>}
-        {opciones.map(n=><option key={n}>{n}</option>)}</select></Field>
-        <Field label="Fecha límite de la tarea" req hint="Según esta fecha se marcará 'a tiempo' o 'con atraso'."><input type="date" className="inp" value={fecha} onChange={e=>setFecha(e.target.value)}/></Field></>}
-      {t==="tomar" && <Field label="Fecha tentativa de solución" hint="Sin fecha: queda 'Sin fecha asignada' y NO se marca vencido."><input type="date" className="inp" value={fecha} onChange={e=>setFecha(e.target.value)}/></Field>}
-      {t==="encuesta" && <Field label="Calificación (1-10)"><Stars value={cal} onChange={setCal}/></Field>}
-      {["rechazar","concluir","concluirTarea","encuesta","asignar"].includes(t) && <Field label={t==="rechazar"?"Motivo del rechazo":t==="concluir"||t==="concluirTarea"?"Comentario de la tarea / soporte":t==="asignar"?"Indicaciones para el técnico (opcional)":"Comentario (opcional)"} req={["rechazar","concluir","concluirTarea"].includes(t)}>
-        <textarea className="inp" value={com} onChange={e=>setCom(e.target.value)}/></Field>}
-      {(t==="concluirTarea"||t==="concluir") && <PhotoField fotos={fotos} setFotos={setFotos} label={t==="concluirTarea"?"Foto de la tarea concluida":"Foto de cierre (opcional)"} req={t==="concluirTarea"} setFoto={setFoto}/>}
-      <div className="row end"><button className="btn ghost" onClick={onClose}>Cancelar</button>
-        <button className={"btn "+(t==="rechazar"?"red":"primary")} disabled={busy} onClick={go}>{busy?"Guardando…":"Confirmar"}</button></div></div>}
-  </Modal>;
-}
-
-/* ===== LISTADO genérico ===== */
-function Listado({items,render,empty}){
-  if(!items.length) return <div className="empty"><div className="e">🗒️</div><div>{empty}</div></div>;
-  return <div>{items.map((r,i)=><div key={r.Codigo||r.id||i}>{render(r)}</div>)}</div>;
-}
-
-/* ===== KANBAN ===== */
-function KanModal({proc,tabla,r,canEdit,cols,onClose,onSaved,toast,setFoto}){
-  const isCom=tabla==="Compras", isSis=tabla==="Sistemas";
-  const titulo=isCom?r.Modelo:isSis?r.Titulo:r.Descripcion;
-  const area=isCom?r.Area:r.Departamento;
-  const [estado,setEstado]=useState(r.Estado); const [com,setCom]=useState(""); const [fecha,setFecha]=useState(r.FechaTentativa||"");
-  async function guardar(){ const arr=await Store.read(tabla);
-    const upd=arr.map(x=>{ if(x.Codigo!==r.Codigo) return x; const o={...x,Estado:estado};
-      if(com.trim()){ o.ComentarioKanban=com; if(isCom)o.ComentarioGG=com; else o.ComentarioSoporte=com; }
-      if(fecha) o.FechaTentativa=fecha; return o; });
-    await Store.write(tabla,upd); toast("Solicitud actualizada"); onSaved(); onClose();
-  }
-  return <Modal title={r.Codigo} onClose={onClose}>
-    {[["Solicitante",r.Solicitante],["Área/Depto",area||"—"],["Detalle",titulo||"—"],
-      isCom?["Tipo",r.TipoCompra||"—"]:["Prioridad",(isSis?r.Urgencia:r.TipoSolicitud)||"—"],
-      ["Descripción",r.Descripcion||r.Justificacion||"—"],["Estado",r.Estado],
-      ["Asignado",r.Asignado||"—"],["Fecha",fmtDate(r.FechaTentativa)]].map(([k,v])=>
-      <div className="kv" key={k}><b>{k}</b><span style={{textAlign:"right",maxWidth:"62%"}}>{v}</span></div>)}
-    {(r.Fotos||[]).length>0 && <><h3 style={{margin:"12px 0 6px"}}>📷 Adjuntos</h3>
-      <div className="fgrid">{r.Fotos.map((f,i)=><SpImg key={i} foto={f} idx={i+1} onClick={setFoto}/>)}</div></>}
-    {["Entregado","Cerrada","Cerrado"].includes(r.Estado) && <button className="btn ocean block" style={{marginTop:10}} onClick={()=>isCom?actaCompra(r):null} disabled={!isCom}>{isCom?"📄 Acta (PDF)":""}</button>}
-    {canEdit ? <div className="card" style={{marginTop:12}}>
-      <h3>✎ Gestionar</h3>
-      <Field label="Estado"><select className="inp" value={estado} onChange={e=>setEstado(e.target.value)}>{cols.map(c=><option key={c}>{c}</option>)}</select></Field>
-      <Field label="Fecha"><input type="date" className="inp" value={fecha} onChange={e=>setFecha(e.target.value)}/></Field>
-      <Field label="Comentario"><textarea className="inp" value={com} onChange={e=>setCom(e.target.value)}/></Field>
-      <button className="btn primary block" onClick={guardar}>Guardar</button>
-    </div> : <div className="hint" style={{marginTop:12}}>Solo lectura.</div>}
-  </Modal>;
-}
-function Kanban({user,toast,setFoto}){
-  const mods=["compras","sistemas","mantenimiento"];
-  const [proc,setProc]=useState(mods[0]);
-  const tabla={compras:"Compras",sistemas:"Sistemas",mantenimiento:"Mantenimiento"}[proc];
-  const [rows,setRows]=useState([]); const [over,setOver]=useState(null); const drag=useRef(null);
-  const [fArea,setFArea]=useState(""); const [fSolic,setFSolic]=useState(""); const [det,setDet]=useState(null);
-  const load=async()=>setRows(await Store.read(tabla)); useEffect(()=>{load();setFArea("");setFSolic("");},[proc]);
-  const cols=KANBAN[proc];
-  const areaOf=r=>tabla==="Compras"?r.Area:r.Departamento;
-  const titleOf=r=>tabla==="Compras"?r.Modelo:tabla==="Sistemas"?r.Titulo:r.Descripcion;
-  const prioOf=r=>tabla==="Compras"?(r.TiempoCompra||""):tabla==="Sistemas"?(r.Urgencia||""):(r.TipoSolicitud||"");
-  const isUrg=r=>{const p=prioOf(r).toLowerCase();return p.includes("urgente")||p.includes("alta");};
-  const areas=[...new Set(rows.map(areaOf).filter(Boolean))].sort();
-  const solics=[...new Set(rows.map(r=>r.Solicitante).filter(Boolean))].sort();
-  const visibles=rows.filter(r=>(!fArea||areaOf(r)===fArea)&&(!fSolic||r.Solicitante===fSolic));
-  function canEditCard(r){ if(esCerrada(r)) return false; if(esDev(user)) return true;
-    if(gestionaModulo(user,proc)) return true;
-    if(user.rol==='gerencia' && proc==='compras' && r.Estado==='En Gerencia') return true;
-    return false; }
-  async function move(code,estado){ const r=rows.find(x=>x.Codigo===code); if(!r||!canEditCard(r)) return;
-    const arr=await Store.read(tabla);
-    await Store.write(tabla,arr.map(x=>x.Codigo===code?{...x,Estado:estado}:x)); load(); toast("Movido a "+estado); }
-  return <div>
-    <h1 className="h1">Tablero Kanban</h1><p className="sub">Toca una tarjeta para abrirla. Podrás editar solo las que te corresponden.</p>
-    <div className="seg">{mods.map(m=><button key={m} className={proc===m?"on":""} onClick={()=>setProc(m)}>{({compras:"Compras",sistemas:"Sistemas",mantenimiento:"Mantenimiento"})[m]}</button>)}</div>
-    <div className="kfilters">
-      <select value={fArea} onChange={e=>setFArea(e.target.value)}><option value="">Todas las áreas</option>{areas.map(a=><option key={a}>{a}</option>)}</select>
-      <select value={fSolic} onChange={e=>setFSolic(e.target.value)}><option value="">Todos los solicitantes</option>{solics.map(s=><option key={s}>{s}</option>)}</select>
-      {(fArea||fSolic) && <button className="btn ghost" style={{flex:"0 0 auto"}} onClick={()=>{setFArea("");setFSolic("");}}>Limpiar</button>}
-    </div>
-    <div className="kcount">{visibles.length} de {rows.length} tarjeta(s){fArea?` · ${fArea}`:""}{fSolic?` · ${fSolic}`:""}</div>
-    <div className="kan">{cols.map(col=>{ const cards=visibles.filter(r=>r.Estado===col);
-      return <div key={col} className={"kcol"+(over===col?" over":"")} onDragOver={e=>{e.preventDefault();setOver(col);}}
-        onDragLeave={()=>setOver(null)} onDrop={e=>{e.preventDefault();setOver(null); if(drag.current) move(drag.current,col);}}>
-        <h4><span><span className="dotc" style={{background:colorOf(col)}}></span>{col}</span><span className="cnt">{cards.length}</span></h4>
-        {cards.map(r=>{ const ed=canEditCard(r);
-          return <div key={r.Codigo} className="kcard" draggable={ed}
-          style={{borderLeft:`4px solid ${isOverdue(r)?cssVar("--red"):colorOf(r.Estado)}`,cursor:"pointer"}}
-          onClick={()=>setDet(r)} onDragStart={()=>{ if(ed) drag.current=r.Codigo; }} onDragEnd={()=>drag.current=null}>
-          <div className="kc">{r.Codigo}{isOverdue(r)?" · ⚠ vencido":""}{esCerrada(r)?" · 🔒":""}</div>
-          <div className="kt">{titleOf(r)}</div>
-          <div style={{display:"flex",gap:6,flexWrap:"wrap",margin:"6px 0 2px"}}>
-            <span className="kchip">{areaOf(r)||"—"}</span>
-            {prioOf(r) && <span className={"kchip"+(isUrg(r)?" urg":"")}>{prioOf(r).split(" ")[0]}</span>}</div>
-          <div className="km">👤 {r.Solicitante}{r.FechaTentativa?` · 📅 ${fmtDate(r.FechaTentativa)}`:""}</div>
-          <div className="kchip" style={{marginTop:6,display:"inline-block"}}>{ed?"✎ Abrir / editar":"👁 Abrir"}</div></div>;})}
-        {!cards.length && <div style={{color:"#aab2b3",fontSize:12,textAlign:"center",padding:"14px 0"}}>—</div>}
-      </div>;})}</div>
-    {det && <KanModal proc={proc} tabla={tabla} r={det} canEdit={canEditCard(det)} cols={cols}
-      onClose={()=>setDet(null)} onSaved={load} toast={toast} setFoto={setFoto}/>}
-  </div>;
-}
-
-/* ===== ADMIN ===== */
-function ClientIdForm({toast}){
-  const [cid,setCid]=useState(localStorage.getItem("wao_clientId")||APP.g.clientId);
-  function guardar(){ const c=cid.trim(); if(!c){toast("Pega el Client ID de Google");return;}
-    localStorage.setItem("wao_clientId",c);
-    if(!confirm("Guardar y reiniciar la app para conectar con tu Google Drive?"))return;
-    localStorage.setItem("pp_mode","graph"); location.reload(); }
-  function restaurar(){ localStorage.removeItem("wao_clientId"); location.reload(); }
-  return <div style={{marginTop:8}}>
-    <Field label="Client ID de Google (.apps.googleusercontent.com)"><input className="inp" value={cid} onChange={e=>setCid(e.target.value)} placeholder="000000000000-xxxx.apps.googleusercontent.com"/></Field>
-    <div className="row"><button className="btn primary" onClick={guardar}>Guardar y reiniciar</button>
-      <button className="btn ghost" onClick={restaurar}>Borrar</button></div>
-    <div className="hint" style={{marginTop:8}}>Lo obtienes en <b>console.cloud.google.com → Credenciales → ID de cliente OAuth (Aplicación web)</b>. No es secreto.</div></div>;
-}
-function ReasignarResp({toast}){
-  const [mod,setMod]=useState("ILD"); const [rows,setRows]=useState([]);
-  const [area,setArea]=useState("__todas"); const [dest,setDest]=useState(""); const [busy,setBusy]=useState(false);
-  const [campo,setCampo]=useState("aprobador"); // solo ILD: aprobador | responsable
-  const areaField=mod==="ILD"?"area":(mod==="Compras"?"Area":"Departamento");
-  const load=async()=>{ try{ setRows(await Store.read(mod)); }catch(e){ setRows([]); } };
-  useEffect(()=>{ load(); setArea("__todas"); setCampo(mod==="ILD"?"aprobador":"solicitante"); },[mod]);
-  const nombres=[...new Set(USERS.map(u=>u.nombre))].sort();
-  const areas=[...new Set(rows.map(r=>r[areaField]).filter(Boolean))].sort();
-  const areasAC=Object.keys(AC);
-  const afect=rows.filter(r=>area==="__todas"||r[areaField]===area);
-  const destList = (mod==="ILD"&&campo==="area")?areasAC:nombres;
-  function setField(r){ if(mod!=="ILD") return {...r,Solicitante:dest};
-    if(campo==="aprobador") return {...r,aprobadorEsperado:dest};
-    if(campo==="area") return {...r,area:dest};
-    return {...r,usuario:dest}; }
-  async function aplicar(){ if(!dest){toast("Elige el destino");return;}
-    if(!afect.length){toast("No hay registros para reasignar");return;}
-    const etiqueta = mod==="ILD"?(campo==="aprobador"?"aprobador":campo==="area"?"área":"responsable"):"solicitante";
-    if(!confirm(`Cambiar el ${etiqueta} de ${afect.length} registro(s) de ${mod}${area!=="__todas"?(" · "+area):""} a "${dest}"?`))return;
-    setBusy(true);
-    try{ const all=await Store.read(mod); const set=new Set(afect.map(r=>r.id));
-      const upd=all.map(r=>set.has(r.id)?setField(r):r);
-      await Store.write(mod,upd); toast(`Actualizados ${afect.length} registro(s)`); load();
-    }catch(e){ toast("No se pudo: "+(e.message||"")); } finally{ setBusy(false); }
-  }
-  async function restaurarResp(){
-    if(!confirm("Restaurar el responsable (quien envió) de los ILD a su valor original del histórico cargado?")) return;
-    setBusy(true);
-    try{ const all=await Store.read("ILD"); const orig=new Map((typeof ILD_SEED!=="undefined"?ILD_SEED:[]).map(s=>[s.id,s.usuario]));
-      let n=0; const upd=all.map(r=>{ if(orig.has(r.id)&&orig.get(r.id)&&r.usuario!==orig.get(r.id)){ n++; return {...r,usuario:orig.get(r.id)}; } return r; });
-      if(n){ await Store.write("ILD",upd); } toast(n?`Restaurados ${n} responsable(s)`:"No había nada que restaurar"); load();
-    }catch(e){ toast("No se pudo restaurar: "+(e.message||"")); } finally{ setBusy(false); }
-  }
-  return <div className="card"><h3>🔁 Reasignar aprobador / responsable</h3>
-    <div className="hint">Para que el histórico de un área le aparezca a un aprobador en su bandeja, reasigna el <b>aprobador</b>. (También puedes cambiar el responsable si lo necesitas.)</div>
-    <div className="row" style={{marginTop:10,gap:8,flexWrap:"wrap"}}>
-      <select className="inp" style={{flex:1,minWidth:130}} value={mod} onChange={e=>setMod(e.target.value)}>{["ILD","Compras","Sistemas","Mantenimiento"].map(m=><option key={m}>{m}</option>)}</select>
-      <select className="inp" style={{flex:1,minWidth:130}} value={area} onChange={e=>setArea(e.target.value)}><option value="__todas">Todas las áreas</option>{areas.map(a=><option key={a} value={a}>{a}</option>)}</select>
-    </div>
-    {mod==="ILD" && <Field label="¿Qué quieres reasignar?"><select className="inp" value={campo} onChange={e=>{setCampo(e.target.value);setDest("");}}>
-      <option value="aprobador">Aprobador (para que le salga a aprobar)</option>
-      <option value="area">Área (corregir el nombre en los registros)</option>
-      <option value="responsable">Responsable (quien envió)</option></select></Field>}
-    <Field label={(mod==="ILD"&&campo==="area")?"Área destino (nombre actual)":"Persona destino"}><select className="inp" value={dest} onChange={e=>setDest(e.target.value)}><option value="">— elegir —</option>{destList.map(n=><option key={n}>{n}</option>)}</select></Field>
-    <div className="hint">Se afectarán <b>{afect.length}</b> registro(s).</div>
-    <button className="btn primary block" style={{marginTop:10}} disabled={busy} onClick={aplicar}>{busy?"Aplicando…":"🔁 Aplicar"}</button>
-    <button className="btn ghost block" style={{marginTop:8}} disabled={busy} onClick={restaurarResp}>♻️ Restaurar responsable original (ILD)</button>
-  </div>;
-}
-function DeleteRecords({toast}){
-  const [mod,setMod]=useState("ILD"); const [rows,setRows]=useState([]);
-  const load=async()=>setRows(await Store.read(mod)); useEffect(()=>{load();},[mod]);
-  const idOf=r=>r.id||r.Codigo;
-  const codeOf=r=>r.Codigo||("#"+r.id);
-  const titleOf=r=> mod==="ILD"?`${r.area} · ${r.usuario}` : mod==="Compras"?r.Modelo : mod==="Sistemas"?r.Titulo : r.Descripcion;
-  async function del(id){ if(!confirm("¿Eliminar este registro de prueba? Es permanente y no afectará los índices del resto."))return;
-    try{ await Store.remove(mod, id); toast("Registro eliminado"); }
-    catch(e){ toast("No se pudo eliminar: "+(e.message||"")); } load(); }
-  return <div className="card"><h3>🗑 Borrar registros de prueba</h3>
-    <div className="hint">Elimina registros de prueba para que no afecten los indicadores. Acción permanente.</div>
-    <select className="inp" style={{margin:"10px 0"}} value={mod} onChange={e=>setMod(e.target.value)}>
-      {["ILD","Compras","Sistemas","Mantenimiento"].map(m=><option key={m}>{m}</option>)}</select>
-    {!rows.length && <div className="hint">Sin registros en {mod}.</div>}
-    <div style={{maxHeight:320,overflow:"auto"}}>
-    {rows.map(r=><div className="kv" key={idOf(r)}>
-      <span style={{flex:1}}><b style={{color:"var(--ink)"}}>{codeOf(r)}</b> · {titleOf(r)}</span>
-      <button className="btn red" style={{padding:"6px 11px",flex:"0 0 auto"}} onClick={()=>del(idOf(r))}>Eliminar</button></div>)}
-    </div></div>;
-}
 function Admin({user,toast}){
   const [counts,setCounts]=useState({}); const [reloadKey,setReloadKey]=useState(0); const [diag,setDiag]=useState("");
   useEffect(()=>{(async()=>{ const o={}; for(const t of ["ILD","Compras","Sistemas","Mantenimiento"]) o[t]=(await Store.read(t)).length; setCounts(o); })();},[reloadKey]);
   async function exportar(t){ const data=await Store.read(t);
     if(!data.length){toast("Sin datos en "+t);return;}
     const rows = t==="ILD" ? data.map(ildToRow) : data;
-    exportXLSX(rows,t,`${t}_PlayaParaiso_${yr()}`); toast("Exportando "+t+"…"); }
+    exportXLSX(rows,t,`${t}_WAO_${yr()}`); toast("Exportando "+t+"…"); }
   function toggleMode(){ const nm=MODE==="graph"?"local":"graph";
     if(!confirm(nm==="graph"?"Conectar a Google Drive (en vivo)? Se recargará la app.":"Cambiar a modo local (demo)? Se recargará la app.")) return;
     localStorage.setItem("pp_mode",nm); location.reload(); }
@@ -2234,21 +1599,15 @@ function App(){
     if(MODE==="graph"){ const ok=await msEnsure(); setConnected(ok);
       if(ok){ try{ applyIldConfig(await cfgRead()); }catch{}
         try{ if(!localStorage.getItem("pp_hist_v1")){
-          const pares=[["ILD",ILD_SEED],["Compras",COMPRAS_SEED],["Sistemas",SISTEMAS_SEED],["Mantenimiento",MANT_SEED]];
-          for(const [t,seed] of pares){ if(seed && seed.length){ const cur=await Store.read(t); if(!cur.length){ await Store.write(t,seed); } } }
+          if(ILD_SEED && ILD_SEED.length){ const cur=await Store.read("ILD"); if(!cur.length){ await Store.write("ILD",ILD_SEED); } }
           localStorage.setItem("pp_hist_v1","1"); } }catch(e){}
         bump(); } }
     setChecking(false);
   })(); },[]);
   const toast=m=>{ setToastMsg(m); const dur=/no se pudo|error|❌|403|falló|no encontr|presupuesto/i.test(m)?8000:2600; setTimeout(()=>setToastMsg(""),dur); };
   async function reloadCounts(u){ const who=u||user; if(!who) return;
-    const c=await Store.read("Compras"), s=await Store.read("Sistemas"), m=await Store.read("Mantenimiento"), il=await Store.read("ILD");
-    const pendChief=(arr,mod,abiertos)=> gestionaModulo(who,mod) ? arr.filter(r=>abiertos.includes(r.Estado)).length
-      : arr.filter(r=>r.Solicitante===who.nombre&&!cerrados.includes(r.Estado)).length;
+    const il=await Store.read("ILD");
     setCounts({
-      compras:pendChief(c,"compras",["Solicitado","En Gerencia","En compra","Listo para entregar"]),
-      sistemas:pendChief(s,"sistemas",["Nuevo","Sin fecha asignada","En proceso"]),
-      mantenimiento:pendChief(m,"mantenimiento",["Nuevo","Sin fecha asignada","En proceso"]),
       ild:(esGD(who)||who.rol==='aprobador')?il.filter(r=>r.estado==='Pendiente'&&(esGD(who)||(who.areas||[]).includes(r.area))).length:0
     });
   }
@@ -2256,10 +1615,10 @@ function App(){
   async function onLogin(u){ sessionStorage.setItem("pp_user",JSON.stringify(u)); setUser(u); setView("home"); }
   function logout(){ sessionStorage.removeItem("pp_user"); setUser(null); setView("home"); }
   if(MODE==="graph" && checking) return <div className="login"><div className="sun"></div><div className="lcard">
-    <div className="lbrand"><span className="dot"></span>WAO Beach Venao</div>
+    <div className="lbrand"><span className="dot"></span>WAO HOTELS - ILD's</div>
     <div className="ltag" style={{marginBottom:0}}>Conectando con Google Drive…</div></div></div>;
   if(MODE==="graph" && !connected) return <div className="login"><div className="sun"></div><div className="lcard">
-    <div className="lbrand"><span className="dot"></span>WAO Beach Venao</div>
+    <div className="lbrand"><span className="dot"></span>WAO HOTELS - ILD's</div>
     <div className="ltag">Inicia sesión con tu cuenta de Google para usar la app. Todo se guarda en tu Google Drive.</div>
     <button className="btn ocean block" onClick={()=>msSignIn()}>🔗 Iniciar sesión con Google</button>
     {msErr && <div className="lerr" style={{marginTop:12,whiteSpace:"normal"}}>{msErr}</div>}
@@ -2267,9 +1626,9 @@ function App(){
   </div></div>;
   if(!user) return <Login onLogin={onLogin}/>;
   const rolLbl={desarrollador:"Desarrollador",gerencia:"Gerencia",aprobador:"Aprobador",colaborador:"Colaborador"}[user.rol]||user.rol;
-  const titles={ild:"ILD",compras:"Compras",sistemas:"Sistemas",mantenimiento:"Mantenimiento",kanban:"Kanban",admin:"Configuración"};
+  const titles={ild:"ILD",admin:"Configuración"};
   return <div className="app">
-    <div className="topbar"><div className="brand"><span className="logobox"><img src={LOGO} alt="WAO Beach Venao"/></span></div><div className="sp"></div>
+    <div className="topbar"><div className="brand"><span className="logobox"><img src={LOGO} alt="WAO HOTELS - ILD's"/></span></div><div className="sp"></div>
       <div className="who">{user.nombre}<br/><span style={{opacity:.85}}>{rolLbl}</span></div>
       <button className="iconbtn" title="Notificaciones" style={{position:"relative"}} onClick={()=>setNotifOpen(true)}>🔔
         {notifs.length>0 && <span style={{position:"absolute",top:-4,right:-4,background:"var(--coral)",color:"#fff",borderRadius:"999px",fontSize:10,fontWeight:800,minWidth:18,height:18,display:"grid",placeItems:"center",padding:"0 4px"}}>{notifs.length}</span>}</button>
@@ -2280,9 +1639,6 @@ function App(){
         <span style={{color:"var(--muted)",fontWeight:600}}>{titles[view]}</span></div>}
       {view==="home" && <Home user={user} go={setView} counts={counts}/>}
       {view==="ild" && <ILD key={cfgVer} user={user} toast={toast} setFoto={setFoto} bump={bump}/>}
-      {view==="compras" && <Compras user={user} toast={toast} setFoto={setFoto}/>}
-      {view==="sistemas" && <Tickets tipo="Sistemas" user={user} toast={toast} setFoto={setFoto}/>}
-      {view==="mantenimiento" && <Tickets tipo="Mantenimiento" user={user} toast={toast} setFoto={setFoto}/>}
       {view==="admin" && <Admin user={user} toast={toast}/>}
     </div>
     {toastMsg && <div className="toast">{toastMsg}</div>}
@@ -2303,7 +1659,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 (function(){
   function show(msg){ var r=document.getElementById("root"); if(r&&r.children.length>0)return;
     r.innerHTML='<div style="max-width:560px;margin:40px auto;padding:20px;font-family:Inter,system-ui,sans-serif;color:#211D1E">'+
-      '<h2 style="color:#00545D">WAO Beach Venao no pudo cargar</h2><p style="color:#6c7a7c">'+msg+'</p>'+
+      '<h2 style="color:#00545D">WAO HOTELS - ILD's no pudo cargar</h2><p style="color:#6c7a7c">'+msg+'</p>'+
       '<p style="color:#6c7a7c;font-size:13px">Si lo ves en la vista previa, descarga el archivo y ábrelo en tu navegador o súbelo a GitHub Pages.</p></div>'; }
   window.addEventListener("error",function(e){ show("Detalle: "+(e.message||"error al cargar un recurso")); });
   window.addEventListener("load",function(){ setTimeout(function(){
