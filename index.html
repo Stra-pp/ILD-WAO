@@ -373,7 +373,7 @@ async function gdfetch(url,method="GET",body=null,raw=false,extraHeaders=null,_r
   let r; try{ r=await fetch(url,{method,headers:h,body,signal:ctrl.signal}); }
   catch(e){ clearTimeout(to); throw new Error("conexión: "+(e.name==="AbortError"?"tiempo de espera agotado":e.message)); }
   clearTimeout(to);
-  if(r.status===401 && !_retry){ const ok=await gRequest(""); if(ok) return gdfetch(url,method,body,raw,extraHeaders,true); }
+  if(r.status===401 && !_retry){ const ok=await gRequest("none"); if(ok) return gdfetch(url,method,body,raw,extraHeaders,true); }
   if(r.status===204) return null;
   if(!r.ok){ let extra=""; try{ const j=await r.json(); extra=j.error&&j.error.message?(" — "+j.error.message):""; }catch{} throw new Error(method+" "+r.status+extra); }
   return raw?r.arrayBuffer():(r.status===200?r.json():null);
@@ -458,33 +458,46 @@ async function addNotif(para,texto,ildId,codigo){
 let msErr="";
 let gTokenClient=null;
 const G_SCOPE="https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email";
+const TOK_KEY="wao_gtok";
+// Guarda/recupera el token de Google (con vencimiento) para mantener la sesión sin volver a pedirlo.
+function loadTok(){ try{ const t=JSON.parse(localStorage.getItem(TOK_KEY)||"null");
+    if(t && t.token && t.exp && Date.now() < (t.exp-60000)){ graphToken=t.token; if(t.user) graphUser=t.user; return true; } }catch(e){} return false; }
+function saveTok(resp){ try{ const exp=Date.now()+((resp&&resp.expires_in?resp.expires_in:3600)*1000);
+    localStorage.setItem(TOK_KEY, JSON.stringify({token:graphToken,exp,user:graphUser})); }catch(e){} }
+function clearTok(){ try{ localStorage.removeItem(TOK_KEY); }catch(e){} }
 function gInit(){
   if(gTokenClient) return true;
   if(typeof google==="undefined" || !(google.accounts&&google.accounts.oauth2)){ msErr="No se cargó Google Identity (la red bloqueó la CDN). Recarga la página."; return false; }
-  if(!APP.g.clientId){ msErr="Falta el Client ID de Google. Pégalo en Configuración → Conexión con tu Google Drive."; return false; }
+  if(!APP.g.clientId){ msErr="Falta el Client ID de Google."; return false; }
   gTokenClient=google.accounts.oauth2.initTokenClient({ client_id:APP.g.clientId, scope:G_SCOPE, callback:()=>{} });
   return true;
 }
+// prompt: "none" = silencioso (sin ventana); "" = reutiliza sesión Google; "consent" = fuerza el permiso.
 function gRequest(prompt){ return new Promise(resolve=>{
   if(!gInit()) return resolve(false);
   gTokenClient.callback=(resp)=>{
-    if(resp && resp.access_token){ graphToken=resp.access_token; resolve(true); }
-    else { if(resp && resp.error && resp.error!=="popup_closed_by_user") msErr=resp.error_description||resp.error; resolve(false); }
+    if(resp && resp.access_token){ graphToken=resp.access_token; saveTok(resp); resolve(true); }
+    else { if(resp && resp.error && !["popup_closed_by_user","access_denied"].includes(resp.error)) msErr=resp.error_description||resp.error; resolve(false); }
   };
-  try{ gTokenClient.requestAccessToken({prompt}); }catch(e){ msErr=e.message||String(e); resolve(false); }
+  try{ gTokenClient.requestAccessToken(prompt!=null?{prompt}:{}); }catch(e){ msErr=e.message||String(e); resolve(false); }
 }); }
 async function setGraphUser(){ try{
     const r=await fetch("https://www.googleapis.com/oauth2/v2/userinfo",{headers:{Authorization:"Bearer "+graphToken}});
-    if(r.ok){ const me=await r.json(); graphUser=me.email||graphUser; } }catch(e){} }
+    if(r.ok){ const me=await r.json(); graphUser=me.email||graphUser;
+      try{ const t=JSON.parse(localStorage.getItem(TOK_KEY)||"null"); if(t){ t.user=graphUser; localStorage.setItem(TOK_KEY,JSON.stringify(t)); } }catch(e){} } }catch(e){} }
+// Al arrancar: usa token guardado (instantáneo, sin popup); si venció, intenta renovarlo EN SILENCIO. Nunca abre ventana en la carga.
 async function msEnsure(){
   if(typeof google==="undefined" || !(google.accounts&&google.accounts.oauth2)){ msErr="No se cargó Google Identity (la red bloqueó la CDN)."; return false; }
-  if(!APP.g.clientId){ msErr="Falta el Client ID de Google. Pégalo en Configuración."; return false; }
-  const ok=await gRequest("");
+  if(!APP.g.clientId){ msErr="Falta el Client ID de Google."; return false; }
+  if(loadTok()) return true;
+  const ok=await gRequest("none");
   if(ok) await setGraphUser();
   return ok;
 }
-async function msSignIn(){ msErr=""; const ok=await gRequest("consent"); if(ok){ await setGraphUser(); location.reload(); } }
-async function msSignOut(){ try{ if(graphToken) google.accounts.oauth2.revoke(graphToken,()=>{}); }catch(e){} graphToken=null; graphUser=""; location.reload(); }
+// Conexión con clic del usuario (gesto): aquí SÍ se puede abrir la ventana, por eso no la bloquea el navegador.
+async function msSignIn(){ msErr=""; let ok=await gRequest(""); if(!ok) ok=await gRequest("consent");
+  if(ok){ await setGraphUser(); location.reload(); } }
+async function msSignOut(){ try{ if(graphToken) google.accounts.oauth2.revoke(graphToken,()=>{}); }catch(e){} clearTok(); graphToken=null; graphUser=""; location.reload(); }
 async function diagListas(){ const out=[];
   if(!APP.g.clientId){ return "❌ Falta el Client ID de Google. Pégalo abajo en “Conexión con tu Google Drive”."; }
   if(!graphToken){ const ok=await msEnsure(); if(!ok) return "❌ No hay sesión de Google activa. Toca “Reconectar Google”. "+(msErr||""); }
@@ -1663,7 +1676,7 @@ function Admin({user,toast}){
 
 /* ===== APP ROOT ===== */
 function App(){
-  const [user,setUser]=useState(()=>{ try{return JSON.parse(sessionStorage.getItem("pp_user"))}catch{return null} });
+  const [user,setUser]=useState(()=>{ try{return JSON.parse(localStorage.getItem("pp_user"))}catch{return null} });
   const [view,setView]=useState("home"); const [toastMsg,setToastMsg]=useState(""); const [counts,setCounts]=useState({});
   const [foto,setFoto]=useState(null); const [gerr,setGerr]=useState(""); const [cfgVer,setCfgVer]=useState(0);
   const [connected,setConnected]=useState(MODE!=="graph"); const [checking,setChecking]=useState(MODE==="graph");
@@ -1693,8 +1706,8 @@ function App(){
     });
   }
   useEffect(()=>{ if(user){ reloadCounts(); loadNotifs(); } },[user,view,cfgVer]);
-  async function onLogin(u){ sessionStorage.setItem("pp_user",JSON.stringify(u)); setUser(u); setView("home"); }
-  function logout(){ sessionStorage.removeItem("pp_user"); setUser(null); setView("home"); }
+  async function onLogin(u){ localStorage.setItem("pp_user",JSON.stringify(u)); setUser(u); setView("home"); }
+  function logout(){ localStorage.removeItem("pp_user"); setUser(null); setView("home"); }
   if(MODE==="graph" && checking) return <div className="login"><div className="sun"></div><div className="lcard">
     <div className="lbrand"><span className="dot"></span>WAO HOTELS - ILD's</div>
     <div className="ltag" style={{marginBottom:0}}>Conectando con Google Drive…</div></div></div>;
