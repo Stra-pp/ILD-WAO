@@ -264,7 +264,7 @@ applyGestiona();
 
 /* ===== CONFIG ===== */
 const APP = {
-  version: "WAO HOTELS · ILD's · v2.4 · Firebase",
+  version: "WAO HOTELS · ILD's · v2.5 · Firebase",
   useGraph: true,   // arranca conectado a Google Drive (Client ID ya fijado abajo). Hay botón "Usar modo demo local" si se necesita.
   g: {
     clientId: "734460790404-2pbc3jriungek7dk2d5di6050bc7l2ja.apps.googleusercontent.com",  // Client ID de WAO (no es secreto: va en el frontend)
@@ -1272,6 +1272,35 @@ function ILDBuilder({user,toast,onSave}){
     {edit && <ILDEditorModal e={edit} onClose={()=>setEdit(null)} onSaved={()=>{setEdit(null);onSave();re();}} toast={toast}/>}
   </div>;
 }
+function PresetExperiencia({toast,onSave}){
+  const G="Experiencia", APRV="Alejandra Pineda";
+  const PRESET={
+    "Revisión del vehículo de Zipline":["Revisar nivel de combustible.","Reporte de kilometraje.","Revisar presión y estado de las llantas.","Verificar funcionamiento de luces, direccionales y luces de freno.","Verificar limpieza interior y exterior del vehículo.","Confirmar que el botiquín y herramientas básicas estén completos.","Reportar cualquier anomalía mecánica."],
+    "Montaje y revisión de sonido":["Revisar la agenda del día y definir el montaje requerido.","Instalar correctamente las bocinas según la operación del día.","Conectar y probar todos los equipos de sonido.","Verificar el funcionamiento de micrófonos y accesorios (si aplica).","Ajustar el volumen según el horario y el ambiente.","Organizar y asegurar el cableado.","Mantener el área de montaje limpia y ordenada."],
+    "Operación de Zipline":["Revisar las reservas del día.","Preparar y organizar cascos, arneses, guantes y equipos.","Coordinar los horarios de transporte de los tours.","Mantener limpia y organizada la bodega y el área de tour.","Apoyar al equipo operativo cuando sea necesario.","Reportar cualquier incidente o necesidad de mantenimiento."],
+    "Experience":["Revisión y arreglo de detalles en Beach Bar.","Revisión y arreglo de detalles en Poolside.","Revisión y arreglo de detalles en WAO Plaza.","Verificar la limpieza, presentación y funcionamiento de las áreas comunes.","Revisar que los equipos de sonido permanezcan funcionando correctamente durante la operación.","Reportar y coordinar cualquier necesidad de mantenimiento.","Apoyar a otros departamentos cuando sea necesario."],
+    "Fiestas y Eventos":["Preparar el montaje según el evento programado.","Instalar y probar equipos de sonido e iluminación.","Coordinar el montaje de mobiliario y decoración cuando aplique.","Supervisar que todos los equipos funcionen correctamente antes del inicio del evento.","Apoyar durante el desarrollo del evento en cualquier requerimiento operativo.","Realizar el desmontaje y guardar correctamente todos los equipos al finalizar."],
+    "Organización de equipos":["Guardar correctamente todos los equipos utilizados.","Poner a cargar radios, micrófonos y equipos portátiles.","Organizar cables, extensiones y accesorios.","Verificar que el inventario de equipos esté completo.","Reportar equipos dañados o faltantes."],
+    "Cierre del día":["Apagar todos los equipos de sonido (cuando sea necesario).","Guardar correctamente las bocinas y accesorios (cuando sea necesario).","Estacionar y asegurar el vehículo de Zipline.","Dejar las áreas de trabajo limpias y organizadas.","Informar cualquier pendiente para el día siguiente."]
+  };
+  const nombres=Object.keys(PRESET);
+  const [,force]=useState(0);
+  const yaCargados=nombres.filter(a=>AC[a]).length;
+  function cargar(){
+    if(!confirm("Se crearán/actualizarán "+nombres.length+" ILD del área Experiencia (responsable: Nelson · aprobadora: Alejandra Pineda). Cada punto pide foto. ¿Continuar?")) return;
+    if(!GRUPOS.includes(G)) GRUPOS.push(G);
+    nombres.forEach(a=>{ CL[a]=PRESET[a].slice(); AC[a]={r:PRESET[a].length,g:G,localidad:""}; APR[a]=APRV; AMODO[a]="normal"; });
+    onSave(); force(x=>x+1);
+    toast("✅ "+nombres.length+" ILD de Experiencia creados");
+  }
+  return <div className="card" style={{borderLeft:"4px solid var(--ocean)"}}>
+    <h3>⚡ Carga rápida — Checklist Diario de Experiencia</h3>
+    <div className="hint">Crea de una vez los <b>{nombres.length} ILD</b> del grupo <b>Experiencia</b> (responsable <b>Nelson</b>, aprobadora <b>Alejandra Pineda</b>). Cada punto pide foto. {yaCargados>0 ? <span style={{color:"#b06a4a"}}>Ya hay {yaCargados} cargados; al continuar se actualizan.</span> : null}</div>
+    <ul style={{margin:"6px 0 0 18px",fontSize:13,color:"var(--muted)"}}>{nombres.map(n=><li key={n}>{n} <span style={{opacity:.7}}>({PRESET[n].length} puntos)</span></li>)}</ul>
+    <button className="btn primary" style={{marginTop:10}} onClick={cargar}>⚡ Cargar los {nombres.length} ILD de Experiencia</button>
+    <div className="hint" style={{marginTop:8}}>Después, crea en la pestaña <b>Usuarios</b> a <b>Nelson</b> (colaborador, con código) y a <b>Alejandra Pineda</b> (aprobador, con correo), y a cada uno márcale estas áreas.</div>
+  </div>;
+}
 function ILDConfig({user,toast,onSave}){
   const [sec,setSec]=useState("ilds");
   return <div>
@@ -1282,7 +1311,7 @@ function ILDConfig({user,toast,onSave}){
       <button className={sec==="usuarios"?"on":""} onClick={()=>setSec("usuarios")}>Usuarios</button>
       <button className={sec==="dias"?"on":""} onClick={()=>setSec("dias")}>Días esperados</button>
     </div>
-    {sec==="ilds" && <ILDBuilder user={user} toast={toast} onSave={onSave}/>}
+    {sec==="ilds" && <React.Fragment><PresetExperiencia toast={toast} onSave={onSave}/><ILDBuilder user={user} toast={toast} onSave={onSave}/></React.Fragment>}
     {sec==="grupos" && <GruposEditor toast={toast} onSave={onSave}/>}
     {sec==="local" && <LocalidadesEditor toast={toast} onSave={onSave}/>}
     {sec==="usuarios" && <UserAdmin toast={toast}/>}
