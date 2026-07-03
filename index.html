@@ -12,7 +12,9 @@
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" onerror="window.__noXlsx=true"></script>
 <style>
 :root{
@@ -262,7 +264,7 @@ applyGestiona();
 
 /* ===== CONFIG ===== */
 const APP = {
-  version: "WAO HOTELS · ILD's · v1.2 · Google Drive",
+  version: "WAO HOTELS · ILD's · v2.0 · Firebase",
   useGraph: true,   // arranca conectado a Google Drive (Client ID ya fijado abajo). Hay botón "Usar modo demo local" si se necesita.
   g: {
     clientId: "734460790404-2pbc3jriungek7dk2d5di6050bc7l2ja.apps.googleusercontent.com",  // Client ID de WAO (no es secreto: va en el frontend)
@@ -308,11 +310,13 @@ const areaModo = a => AMODO[a] || (a==='Áreas Públicas'?'lista':'normal');
 const equipoDe = u => { const a=new Set(u.areas||[]); return USERS.filter(x=>x.rol==='colaborador' && (x.areas||[]).some(ar=>a.has(ar))).map(x=>x.nombre); };
 
 /* ===== Helpers ===== */
+const TZ="America/Panama";
 const nowISO = () => new Date().toISOString();
+const panamaYMD = d => { try{ return new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(d)); }catch(e){ return String(d||"").slice(0,10); } };
 const fmtDate = s => { if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return s;
   return d.toLocaleDateString("es-EC",{day:"2-digit",month:"short",year:"numeric"}); };
 const fmtDT = s => { if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return s;
-  return d.toLocaleString("es-EC",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}); };
+  return d.toLocaleString("es-PA",{timeZone:TZ,day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}); };
 const yr = () => new Date().getFullYear();
 let _seq = Date.now()%100000; const gid = () => ++_seq;
 const itemText = it => (typeof it==='object'&&it!==null)?it.t:it;
@@ -357,76 +361,77 @@ const KANBAN = {
 const ALL_ESTADOS = { Sistemas:KANBAN.sistemas, Mantenimiento:KANBAN.mantenimiento };
 
 /* ===== CAPA DE DATOS: read/write arreglo completo por "tabla" ===== */
-let msalApp=null, graphToken=null, graphUser="";
-let MODE = localStorage.getItem("pp_mode") || (APP.useGraph ? "graph" : "local");
+let MODE = "graph";  // siempre Firebase (nube segura)
 const Local = {
   read:t=>{ try{return JSON.parse(localStorage.getItem("pp_"+t)||"[]")}catch{return[]} },
   write:(t,arr)=>localStorage.setItem("pp_"+t,JSON.stringify(arr))
 };
-// ===== Backend de Google Drive (archivos JSON + fotos) =====
-const G_API="https://www.googleapis.com/drive/v3";
-const G_UP="https://www.googleapis.com/upload/drive/v3";
-async function gdfetch(url,method="GET",body=null,raw=false,extraHeaders=null,_retry=false){
-  const h={Authorization:`Bearer ${graphToken}`};
-  if(extraHeaders) Object.assign(h,extraHeaders);
-  const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),30000);
-  let r; try{ r=await fetch(url,{method,headers:h,body,signal:ctrl.signal}); }
-  catch(e){ clearTimeout(to); throw new Error("conexión: "+(e.name==="AbortError"?"tiempo de espera agotado":e.message)); }
-  clearTimeout(to);
-  if(r.status===401 && !_retry){ const ok=await gRequest("none"); if(ok) return gdfetch(url,method,body,raw,extraHeaders,true); }
-  if(r.status===204) return null;
-  if(!r.ok){ let extra=""; try{ const j=await r.json(); extra=j.error&&j.error.message?(" — "+j.error.message):""; }catch{} throw new Error(method+" "+r.status+extra); }
-  return raw?r.arrayBuffer():(r.status===200?r.json():null);
-}
-async function gFindId(name,parentId,isFolder){
-  const q=[`name='${String(name).replace(/'/g,"\\'")}'`,"trashed=false"];
-  if(parentId) q.push(`'${parentId}' in parents`);
-  if(isFolder) q.push("mimeType='application/vnd.google-apps.folder'");
-  const r=await gdfetch(`${G_API}/files?q=${encodeURIComponent(q.join(" and "))}&fields=files(id,name)&spaces=drive&pageSize=1`);
-  const f=((r&&r.files)||[])[0]; return f?f.id:null;
-}
-async function gEnsureFolder(name,parentId){
-  let id=await gFindId(name,parentId,true); if(id) return id;
-  const meta={name,mimeType:"application/vnd.google-apps.folder"}; if(parentId) meta.parents=[parentId];
-  const r=await gdfetch(`${G_API}/files?fields=id`,"POST",JSON.stringify(meta),false,{"Content-Type":"application/json"});
-  return r.id;
-}
-let _gRoot=null,_gFotos=null;
-async function gRootId(){ if(_gRoot) return _gRoot; _gRoot=await gEnsureFolder(APP.g.rootFolder,null); return _gRoot; }
-async function gFotosId(){ if(_gFotos) return _gFotos; _gFotos=await gEnsureFolder(APP.g.fotosFolder, await gRootId()); return _gFotos; }
-const GoogleStore = {
-  async read(t){ try{
-      const fn=APP.g.files[t]; const root=await gRootId();
-      const id=await gFindId(fn,root,false); if(!id) return [];
-      const buf=await gdfetch(`${G_API}/files/${id}?alt=media`,"GET",null,true);
-      return JSON.parse(new TextDecoder().decode(buf)); }catch(e){ return []; } },
-  async write(t,arr){ const fn=APP.g.files[t]; const root=await gRootId();
-      const data=JSON.stringify(arr);
-      const id=await gFindId(fn,root,false);
-      if(id){ await gdfetch(`${G_UP}/files/${id}?uploadType=media`,"PATCH",data,false,{"Content-Type":"application/json"}); }
-      else { const b="wao"+Date.now(); const meta=JSON.stringify({name:fn,parents:[root]});
-        const mp=`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${data}\r\n--${b}--`;
-        await gdfetch(`${G_UP}/files?uploadType=multipart&fields=id`,"POST",mp,false,{"Content-Type":`multipart/related; boundary=${b}`}); } },
-  async ensureCarpeta(carpetaId){ const fot=await gFotosId(); await gEnsureFolder(carpetaId,fot); },
-  async putFoto(dataUrl,nombre,carpetaId){
-      const fot=await gFotosId(); const sub=await gEnsureFolder(carpetaId,fot);
-      const blob=await (await fetch(dataUrl)).blob();
-      const b="wao"+Date.now(); const meta=JSON.stringify({name:nombre,parents:[sub]});
-      const pre=`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${b}\r\nContent-Type: image/jpeg\r\n\r\n`;
-      const post=`\r\n--${b}--`;
-      const body=new Blob([pre,blob,post]);
-      const r=await gdfetch(`${G_UP}/files?uploadType=multipart&fields=id`,"POST",body,false,{"Content-Type":`multipart/related; boundary=${b}`});
-      return {nombre, path:((r&&r.id)||""), carpeta:carpetaId}; },
-  async uploadFoto(dataUrl,nombre,carpetaId){ await this.ensureCarpeta(carpetaId); return this.putFoto(dataUrl,nombre,carpetaId); },
-  async getImg(idOrPath){
-      const buf=await gdfetch(`${G_API}/files/${idOrPath}?alt=media`,"GET",null,true);
-      return URL.createObjectURL(new Blob([buf])); }
+// ===== Backend Firebase (Auth + Firestore) =====
+let msErr="";
+const FB_CONFIG = {
+  apiKey: "AIzaSyCmeL9aTOV7A3ljkvJb3BZIKCAb2pNymO8",
+  authDomain: "wao-hotels.firebaseapp.com",
+  projectId: "wao-hotels",
+  storageBucket: "wao-hotels.firebasestorage.app",
+  messagingSenderId: "215945954615",
+  appId: "1:215945954615:web:2ca8d900ce75cf8e5e06b2"
 };
-const recFecha=r=>String(r.fecha||r.FechaSolicitud||r.FechaCreacion||"").slice(0,10);
+let fbAuth=null, fbDb=null, fbReady=false;
+function fbInit(){ if(fbReady) return true;
+  if(typeof firebase==="undefined"){ msErr="No cargó Firebase (la red bloqueó la CDN). Recarga la página."; return false; }
+  try{ if(!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    fbAuth=firebase.auth(); fbDb=firebase.firestore();
+    try{ fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); }catch(e){}
+    fbReady=true; return true;
+  }catch(e){ msErr="Firebase: "+(e.message||e); return false; }
+}
+const COLL={ILD:"ild", Notif:"notif"};
+let _wcache={};   // hash por id para escribir solo lo cambiado
+const GoogleStore = {
+  async read(t){
+    if(t==="ILD_Config"){ try{ const d=await fbDb.collection("config").doc("ild").get(); return d.exists?(d.data().value||{}):{}; }catch(e){ return {}; } }
+    try{ const coll=COLL[t]||t.toLowerCase(); const snap=await fbDb.collection(coll).get();
+      const arr=snap.docs.map(d=>d.data());
+      _wcache[t]=new Map(arr.map(r=>[String(r.id||r.Codigo), JSON.stringify(r)]));
+      return arr;
+    }catch(e){ return []; }
+  },
+  async write(t,val){
+    if(t==="ILD_Config"){ await fbDb.collection("config").doc("ild").set({value:val}); return; }
+    const coll=COLL[t]||t.toLowerCase(); const arr=val||[];
+    const prev=_wcache[t]||new Map(); const next=new Map();
+    let batch=fbDb.batch(), ops=0; const commits=[];
+    const flush=()=>{ if(ops>0){ commits.push(batch.commit()); batch=fbDb.batch(); ops=0; } };
+    for(const rec of arr){ const id=String(rec.id||rec.Codigo); const j=JSON.stringify(rec); next.set(id,j);
+      if(prev.get(id)!==j){ batch.set(fbDb.collection(coll).doc(id), rec); ops++; if(ops>=400) flush(); } }
+    for(const id of prev.keys()){ if(!next.has(id)){ batch.delete(fbDb.collection(coll).doc(id)); ops++; if(ops>=400) flush(); } }
+    flush(); await Promise.all(commits); _wcache[t]=next;
+  },
+  async ensureCarpeta(){ /* no aplica en Firebase */ },
+  async putFoto(dataUrl,nombre,carpetaId){
+    const ref=fbDb.collection("ild_fotos").doc();
+    await ref.set({ildId:carpetaId, nombre, data:dataUrl, ts:Date.now()});
+    return {nombre, path:ref.id, carpeta:carpetaId};
+  },
+  async uploadFoto(dataUrl,nombre,carpetaId){ return this.putFoto(dataUrl,nombre,carpetaId); },
+  async getImg(idOrPath){
+    try{ const d=await fbDb.collection("ild_fotos").doc(idOrPath).get(); return d.exists?(d.data().data||""):""; }catch(e){ return ""; }
+  }
+};
+// Limpieza de fotos de más de 2 meses (conserva el registro; solo borra imágenes)
+async function limpiarFotosViejas(){
+  const corte=Date.now()-60*24*3600*1000; let borradas=0;
+  const snap=await fbDb.collection("ild_fotos").where("ts","<",corte).get();
+  let batch=fbDb.batch(), ops=0; const commits=[];
+  snap.docs.forEach(d=>{ batch.delete(d.ref); ops++; borradas++; if(ops>=400){ commits.push(batch.commit()); batch=fbDb.batch(); ops=0; } });
+  if(ops>0) commits.push(batch.commit()); await Promise.all(commits);
+  return borradas;
+}
+const recFecha=r=>{ const raw=r.fecha||r.FechaSolicitud||r.FechaCreacion; return raw?panamaYMD(raw):""; };
 const recEstado=r=>String(r.estado||r.Estado||"");
 const norm=s=>String(s||"").toLowerCase().replace(/[\s_-]+/g,"");
-const hoyISO=()=>new Date().toISOString().slice(0,10);
-const desdeDias=n=>{ const d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); };
+const hoyISO=()=>panamaYMD(Date.now());
+const desdeDias=n=>panamaYMD(Date.now()-n*86400000);
 const Store = {
   read(t){ if(MODE!=="graph") return Local.read(t); return GoogleStore.read(t); },
   write(t,a){ if(MODE!=="graph") return Local.write(t,a); return GoogleStore.write(t,a); },
@@ -444,7 +449,6 @@ const Store = {
 
 async function subirFotos(fotos,carpetaId,prefijo){
   if(MODE!=="graph") return fotos.map((d,i)=>({nombre:`${prefijo}_${i+1}.jpg`,data:d}));
-  try{ await GoogleStore.ensureCarpeta(carpetaId); }catch(e){}
   return Promise.all(fotos.map(async(d,i)=>{ const nombre=`${prefijo}_${i+1}.jpg`;
     try{ return await GoogleStore.putFoto(d,nombre,carpetaId); }catch(e){ return {nombre,error:true}; } }));
 }
@@ -455,59 +459,39 @@ async function addNotif(para,texto,ildId,codigo){
     await Store.write("Notif",arr); }catch(e){}
 }
 
-let msErr="";
-let gTokenClient=null;
-const G_SCOPE="https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email";
-const TOK_KEY="wao_gtok";
-// Guarda/recupera el token de Google (con vencimiento) para mantener la sesión sin volver a pedirlo.
-function loadTok(){ try{ const t=JSON.parse(localStorage.getItem(TOK_KEY)||"null");
-    if(t && t.token && t.exp && Date.now() < (t.exp-60000)){ graphToken=t.token; if(t.user) graphUser=t.user; return true; } }catch(e){} return false; }
-function saveTok(resp){ try{ const exp=Date.now()+((resp&&resp.expires_in?resp.expires_in:3600)*1000);
-    localStorage.setItem(TOK_KEY, JSON.stringify({token:graphToken,exp,user:graphUser})); }catch(e){} }
-function clearTok(){ try{ localStorage.removeItem(TOK_KEY); }catch(e){} }
-function gInit(){
-  if(gTokenClient) return true;
-  if(typeof google==="undefined" || !(google.accounts&&google.accounts.oauth2)){ msErr="No se cargó Google Identity (la red bloqueó la CDN). Recarga la página."; return false; }
-  if(!APP.g.clientId){ msErr="Falta el Client ID de Google."; return false; }
-  gTokenClient=google.accounts.oauth2.initTokenClient({ client_id:APP.g.clientId, scope:G_SCOPE, callback:()=>{} });
-  return true;
+let graphUser="";
+let _fbUser=null;
+async function loadProfile(fbu){
+  try{ const d=await fbDb.collection("users").doc(fbu.uid).get();
+    if(d.exists) return Object.assign({uid:fbu.uid,email:fbu.email}, d.data());
+    const esAdmin=(fbu.email||"").toLowerCase()==="shirley@waohotels.com";
+    const prof={ uid:fbu.uid, email:fbu.email, nombre:esAdmin?"Shirley":(fbu.email||"").split("@")[0],
+      rol: esAdmin?"desarrollador":"aprobador", areas: esAdmin?[]:Object.keys((typeof AC!=="undefined"&&AC)||{}), gestiona:[] };
+    try{ await fbDb.collection("users").doc(fbu.uid).set(prof); }catch(e){}
+    return prof;
+  }catch(e){ return null; }
 }
-// prompt: "none" = silencioso (sin ventana); "" = reutiliza sesión Google; "consent" = fuerza el permiso.
-function gRequest(prompt){ return new Promise(resolve=>{
-  if(!gInit()) return resolve(false);
-  gTokenClient.callback=(resp)=>{
-    if(resp && resp.access_token){ graphToken=resp.access_token; saveTok(resp); resolve(true); }
-    else { if(resp && resp.error && !["popup_closed_by_user","access_denied"].includes(resp.error)) msErr=resp.error_description||resp.error; resolve(false); }
-  };
-  try{ gTokenClient.requestAccessToken(prompt!=null?{prompt}:{}); }catch(e){ msErr=e.message||String(e); resolve(false); }
-}); }
-async function setGraphUser(){ try{
-    const r=await fetch("https://www.googleapis.com/oauth2/v2/userinfo",{headers:{Authorization:"Bearer "+graphToken}});
-    if(r.ok){ const me=await r.json(); graphUser=me.email||graphUser;
-      try{ const t=JSON.parse(localStorage.getItem(TOK_KEY)||"null"); if(t){ t.user=graphUser; localStorage.setItem(TOK_KEY,JSON.stringify(t)); } }catch(e){} } }catch(e){} }
-// Al arrancar: usa token guardado (instantáneo, sin popup); si venció, intenta renovarlo EN SILENCIO. Nunca abre ventana en la carga.
-async function msEnsure(){
-  if(typeof google==="undefined" || !(google.accounts&&google.accounts.oauth2)){ msErr="No se cargó Google Identity (la red bloqueó la CDN)."; return false; }
-  if(!APP.g.clientId){ msErr="Falta el Client ID de Google."; return false; }
-  if(loadTok()) return true;
-  const ok=await gRequest("none");
-  if(ok) await setGraphUser();
-  return ok;
-}
-// Conexión con clic del usuario (gesto): aquí SÍ se puede abrir la ventana, por eso no la bloquea el navegador.
-async function msSignIn(){ msErr=""; let ok=await gRequest(""); if(!ok) ok=await gRequest("consent");
-  if(ok){ await setGraphUser(); location.reload(); } }
-async function msSignOut(){ try{ if(graphToken) google.accounts.oauth2.revoke(graphToken,()=>{}); }catch(e){} clearTok(); graphToken=null; graphUser=""; location.reload(); }
+function onAuth(cb){ if(!fbInit()){ setTimeout(()=>cb(null),0); return ()=>{}; }
+  return fbAuth.onAuthStateChanged(u=>{ _fbUser=u; graphUser=u?u.email:""; cb(u); }); }
+function fbAuthMsg(e){ const c=(e&&e.code)||"";
+  if(c.includes("wrong-password")||c.includes("invalid-credential")||c.includes("invalid-login")) return "Correo o contraseña incorrectos.";
+  if(c.includes("user-not-found")) return "Ese usuario no existe. Pídele al administrador que te cree la cuenta.";
+  if(c.includes("user-disabled")) return "Esta cuenta está deshabilitada.";
+  if(c.includes("too-many-requests")) return "Demasiados intentos. Espera un momento e inténtalo de nuevo.";
+  if(c.includes("network")) return "Sin conexión a internet. Revisa tu red.";
+  return (e&&e.message)||"No se pudo iniciar sesión."; }
+async function msSignInEmail(email,pass){ msErr=""; if(!fbInit()) return false;
+  try{ await fbAuth.signInWithEmailAndPassword(email,pass); return true; }
+  catch(e){ msErr=fbAuthMsg(e); return false; } }
+async function msSignOut(){ try{ if(fbAuth) await fbAuth.signOut(); }catch(e){} try{localStorage.removeItem("pp_user");}catch(e){} location.reload(); }
+async function msEnsure(){ return !!(fbAuth&&fbAuth.currentUser); }
 async function diagListas(){ const out=[];
-  if(!APP.g.clientId){ return "❌ Falta el Client ID de Google. Pégalo abajo en “Conexión con tu Google Drive”."; }
-  if(!graphToken){ const ok=await msEnsure(); if(!ok) return "❌ No hay sesión de Google activa. Toca “Reconectar Google”. "+(msErr||""); }
-  out.push("✅ Sesión de Google: "+(graphUser||"activa"));
-  try{ await gRootId(); out.push("✅ Carpeta WAO_NEXO: OK"); }
-  catch(e){ out.push("❌ No pude crear/abrir la carpeta: "+e.message); return out.join("\n"); }
-  try{ const t=Date.now(); await GoogleStore.write("Notif", await GoogleStore.read("Notif"));
-    out.push("✅ Escritura de prueba en Drive: OK ("+(Date.now()-t)+" ms)"); }
-  catch(e){ out.push("❌ Escritura falló: "+e.message); }
-  out.push(""); out.push("Si todo sale ✅, la app ya guarda en tu Google Drive.");
+  if(!fbInit()) return "❌ "+msErr;
+  const u=fbAuth.currentUser; if(!u) return "❌ No hay sesión activa. Vuelve a iniciar sesión.";
+  out.push("✅ Sesión: "+u.email);
+  try{ const t=Date.now(); await fbDb.collection("config").doc("_ping").set({t}); out.push("✅ Escritura en la base de datos: OK ("+(Date.now()-t)+" ms)"); }
+  catch(e){ out.push("❌ Escritura falló: "+(e.message||e)+"  (revisa las Reglas de Firestore)"); }
+  out.push(""); out.push("Si todo sale ✅, la app guarda seguro en Firebase.");
   return out.join("\n"); }
 // Código legible por proceso/año a partir del arreglo existente
 function nextCode(prefix, arr){
@@ -610,42 +594,26 @@ function PhotoField({fotos,setFotos,multiple=true,label,req,hint,setFoto}){
 }
 
 /* ===== LOGIN (rediseñado) ===== */
-function Login({onLogin}){
-  const all=[...USERS].sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  const [name,setName]=useState(""); const [pin,setPin]=useState(""); const [err,setErr]=useState("");
-  const sel=all.find(u=>u.nombre===name);
-  const needPin=!!(sel&&sel.pin);
-  const press=d=>{ setErr(""); setPin(p=>p.length<4?p+d:p); };
-  useEffect(()=>{ setPin(""); setErr(""); },[name]);
-  useEffect(()=>{ if(needPin&&pin.length===4){
-    if(sel.pin===pin){ setTimeout(()=>onLogin(sel),120); } else { setErr("PIN incorrecto"); setTimeout(()=>setPin(""),450); }
-  }},[pin]);
-  function entrar(){ if(!sel){setErr("Selecciona tu nombre");return;}
-    if(needPin){ if(sel.pin!==pin){setErr("Ingresa tu PIN de 4 dígitos");return;} onLogin(sel); }
-    else onLogin(sel); }
+function Login({onLogin,busy,err}){
+  const [email,setEmail]=useState(""); const [pass,setPass]=useState(""); const [le,setLe]=useState("");
+  async function entrar(){ setLe(""); if(!email||!pass){ setLe("Escribe tu correo y contraseña"); return; }
+    const ok=await onLogin(email.trim(),pass); if(!ok) setLe(msErr||"No se pudo iniciar sesión"); }
   return <div className="login">
     <div className="sun"></div><div className="wave"></div>
     <div className="lcard">
       <div className="loginlogo"><img src={LOGO_B} alt="WAO HOTELS - ILD's"/></div>
       <div className="ltag">Inspección de Lista Diaria · WAO Hotels</div>
-      <select className="lsel" value={name} onChange={e=>setName(e.target.value)}>
-        <option value="">Selecciona tu nombre…</option>
-        {all.map(u=><option key={u.id} value={u.nombre}>{u.nombre}</option>)}</select>
-      {needPin && <><div className="ldots">{[0,1,2,3].map(i=><i key={i} className={i<pin.length?"f":""}/>)}</div>
-        <div className="lpad">
-          {[1,2,3,4,5,6,7,8,9].map(n=><button key={n} onClick={()=>press(""+n)}>{n}</button>)}
-          <button className="fn" onClick={()=>setPin(p=>p.slice(0,-1))}>Borrar</button>
-          <button onClick={()=>press("0")}>0</button>
-          <button className="fn" onClick={()=>setPin("")}>Limpiar</button>
-        </div></>}
-      {sel && !needPin && <div className="hint" style={{textAlign:"center",margin:"8px 0 2px"}}>No necesitas PIN. Toca Ingresar.</div>}
-      <div className="lerr">{err}</div>
-      <button className="btn primary block" style={{marginTop:10}} onClick={entrar}>Ingresar</button>
+      <input className="inp" style={{marginTop:12}} type="email" placeholder="Correo del hotel" value={email}
+        autoComplete="username" onChange={e=>setEmail(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")entrar();}}/>
+      <input className="inp" style={{marginTop:8}} type="password" placeholder="Contraseña" value={pass}
+        autoComplete="current-password" onChange={e=>setPass(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")entrar();}}/>
+      <div className="lerr">{le||err||""}</div>
+      <button className="btn primary block" style={{marginTop:10}} disabled={busy} onClick={entrar}>{busy?"Entrando…":"Ingresar"}</button>
+      <div className="hint" style={{textAlign:"center",marginTop:12}}>¿No tienes cuenta? Pídele al administrador que te la cree.</div>
     </div>
     <div className="lfoot">{APP.version}</div>
   </div>;
 }
-
 /* ===== HOME ===== */
 function Home({user,go,counts}){
   const tiles=[];
@@ -902,20 +870,23 @@ function ILDMios({user,regs,setFoto}){
 }
 function SpImg({foto,idx,onClick}){
   const [src,setSrc]=useState(foto.data||"");
-  useEffect(()=>{ let url; let vivo=true;
+  const [arch,setArch]=useState(false);
+  useEffect(()=>{ let vivo=true;
     if(!foto.data && foto.path && MODE==="graph"){
-      (async()=>{ try{ url=await GoogleStore.getImg(foto.path); if(vivo) setSrc(url); }catch(e){} })(); }
-    return ()=>{ vivo=false; if(url) URL.revokeObjectURL(url); };
+      (async()=>{ try{ const d=await GoogleStore.getImg(foto.path); if(vivo){ if(d) setSrc(d); else setArch(true); } }catch(e){ if(vivo) setArch(true); } })(); }
+    return ()=>{ vivo=false; };
   },[]);
+  if(arch) return <div className="fthumb" style={{display:"grid",placeItems:"center",background:"#f3efe6",fontSize:10,color:"#999",textAlign:"center",padding:4}}>🗑️<br/>Foto archivada</div>;
   if(src) return <div className="fthumb"><img src={src} onClick={()=>onClick&&onClick(src)}/><span className="fnum">{idx}</span></div>;
   if(foto.spUrl) return <a className="fthumb" href={foto.spUrl} target="_blank" rel="noreferrer" style={{display:"grid",placeItems:"center",background:"#eef3f6",color:"var(--ocean-d)",fontSize:11,fontWeight:700,textDecoration:"none",textAlign:"center"}}>🔗<br/>Foto {idx}</a>;
   if(foto.error) return <div className="fthumb" style={{display:"grid",placeItems:"center",background:"#f6efe9",fontSize:11,color:"#b06a4a",textAlign:"center"}}>⚠️<br/>No subió</div>;
   if(!foto.data && !foto.path) return <div className="fthumb" style={{display:"grid",placeItems:"center",background:"#f3efe6",fontSize:11,color:"#999"}}>—</div>;
   return <div className="fthumb" style={{display:"grid",placeItems:"center",background:"#f3efe6",fontSize:18}}>⏳</div>;
 }
-function actaILD(r){
+async function actaILD(r){
   const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-  const f=d=>d?new Date(d).toLocaleString('es-EC'):'—';
+  const f=d=>d?new Date(d).toLocaleString('es-PA',{timeZone:TZ}):'—';
+  let fotoImgs=[]; try{ fotoImgs=(await Promise.all((r.fotos||[]).map(async ft=>{ if(ft&&ft.data) return ft.data; if(ft&&ft.path){ try{ return await GoogleStore.getImg(ft.path); }catch(e){ return ""; } } return ""; }))).filter(Boolean); }catch(e){}
   const items=itemsDe(r);
   const filas=items.map((it,i)=>{ const tx=itemText(it),tp=itemTipo(it); let val="—";
     if(tp==='sino'){ const v=(r.checks&&r.checks['yn-'+i])||""; val=v==='si'?'Sí':v==='no'?'No':v==='na'?'N/A':'—'; }
@@ -942,6 +913,7 @@ function actaILD(r){
   ${r.obs?`<div class="note"><b>Nota del colaborador:</b> ${esc(r.obs)}</div>`:""}
   ${r.notaJef?`<div class="note"><b>Comentario de ${esc(r.aprobador)}:</b> ${esc(r.notaJef)}</div>`:""}
   ${r.notaGerencia?`<div class="note"><b>Gerencia:</b> ${esc(r.notaGerencia)}</div>`:""}
+  ${fotoImgs.length?`<h3 style="margin-top:18px;font-size:15px;color:#0b3b46">Evidencia fotográfica</h3><div style="display:flex;flex-wrap:wrap;gap:8px">${fotoImgs.map(d=>`<img src="${d}" style="width:180px;height:135px;object-fit:cover;border-radius:8px;border:1px solid #ddd" alt="foto"/>`).join("")}</div>`:""}
   <script>window.onload=function(){setTimeout(function(){try{window.print();}catch(e){}},300);};<\/script>
   </body></html>`;
   try{
@@ -1619,6 +1591,20 @@ function DeleteRecords({toast}){
       <button className="btn red" style={{padding:"6px 11px",flex:"0 0 auto"}} onClick={()=>del(idOf(r))}>Eliminar</button></div>)}
     </div></div>;
 }
+function FotoCleanup({toast}){
+  const [busy,setBusy]=useState(false); const [msg,setMsg]=useState("");
+  async function limpiar(){ if(!confirm("¿Borrar las fotos de más de 2 meses? Se conservan los registros (cumplimiento, quién subió, quién aprobó, observaciones); solo se eliminan las imágenes para liberar espacio. Esta acción no se puede deshacer.")) return;
+    setBusy(true); setMsg("");
+    try{ const n=await limpiarFotosViejas(); setMsg("Listo: se borraron "+n+" foto(s) de más de 2 meses."); toast&&toast("Fotos limpiadas: "+n); }
+    catch(e){ setMsg("No se pudo: "+(e.message||e)); }
+    setBusy(false);
+  }
+  return <div className="card"><h3>🧹 Mantenimiento de fotos</h3>
+    <div className="hint">Las fotos ocupan espacio. Aquí borras las de más de <b>2 meses</b>. Los registros (cumplimiento, quién, observaciones) se conservan siempre. Antes de limpiar, descarga en PDF los ILD cuyas fotos quieras guardar como referencia.</div>
+    <div className="row" style={{marginTop:10}}><button className="btn ocean" disabled={busy} onClick={limpiar}>{busy?"Limpiando…":"🧹 Limpiar fotos de más de 2 meses"}</button></div>
+    {msg && <div className="hint" style={{marginTop:8}}>{msg}</div>}
+  </div>;
+}
 function Admin({user,toast}){
   const [counts,setCounts]=useState({}); const [reloadKey,setReloadKey]=useState(0); const [diag,setDiag]=useState("");
   useEffect(()=>{(async()=>{ const o={}; for(const t of ["ILD"]) o[t]=(await Store.read(t)).length; setCounts(o); })();},[reloadKey]);
@@ -1641,9 +1627,9 @@ function Admin({user,toast}){
   }
   return <div>
     <h1 className="h1">Configuración</h1><p className="sub">Conexión, datos y mantenimiento.</p>
-    <div className="card"><h3>☁️ Conexión Google Drive</h3>
-      <div className="kv"><b>Modo</b><span>{MODE==="graph"?"En vivo (Google Drive)":"Local (demo)"}</span></div>
-      {MODE==="graph" && <div className="kv"><b>Cuenta Google</b><span>{graphUser||"—"}</span></div>}
+    <div className="card"><h3>☁️ Conexión (Firebase)</h3>
+      <div className="kv"><b>Modo</b><span>{MODE==="graph"?"En vivo (Firebase)":"Local (demo)"}</span></div>
+      {MODE==="graph" && <div className="kv"><b>Cuenta</b><span>{graphUser||"—"}</span></div>}
       <div className="kv"><b>Registros</b><span>ILD {counts.ILD||0}</span></div>
       <div className="kv"><b>Versión</b><span>{APP.version}</span></div>
       <div className="kv" style={{flexDirection:"column",alignItems:"flex-start",gap:4}}><b>Origen autorizado (regístralo en Google Cloud)</b>
@@ -1651,7 +1637,7 @@ function Admin({user,toast}){
       <div className="row" style={{marginTop:10}}>
         <button className="btn ocean" onClick={()=>setReloadKey(k=>k+1)}>🔄 Sincronizar</button>
         <button className="btn ghost" onClick={toggleMode}>{MODE==="graph"?"Cambiar a demo local":"Conectar a Google Drive"}</button></div>
-      <div className="hint" style={{marginTop:8}}>El histórico se guarda en {MODE==="graph"?"Google Drive y se abre desde cualquier dispositivo al iniciar sesión.":"este navegador (modo demo)."}</div>
+      <div className="hint" style={{marginTop:8}}>El histórico se guarda en {MODE==="graph"?"la base de datos segura (Firebase) y se abre desde cualquier dispositivo al iniciar sesión.":"este navegador (modo demo)."}</div>
     </div>
     {MODE==="graph" && <div className="card"><h3>🩺 Diagnóstico de conexión</h3>
       <div className="hint">Si algo no se graba, toca “Probar conexión”: verifica tu sesión de Google, la carpeta WAO_NEXO y el permiso de escritura.</div>
@@ -1661,9 +1647,7 @@ function Admin({user,toast}){
       </div>
       {diag && <pre style={{whiteSpace:"pre-wrap",background:"#0e1b22",color:"#d6f0f4",padding:12,borderRadius:10,fontSize:12.5,marginTop:10,lineHeight:1.5}}>{diag}</pre>}
     </div>}
-    <div className="card"><h3>🪪 Conexión con tu Google Drive</h3>
-      <div className="hint">Pega aquí el <b>Client ID</b> de Google Cloud. Es lo único que necesitas para conectar la app con tu Drive.</div>
-      <ClientIdForm toast={toast}/></div>
+    <FotoCleanup toast={toast}/>
     <div className="card"><h3>📊 Exportar histórico a Excel</h3>
       <div className="row">{["ILD"].map(t=><button key={t} className="btn green" onClick={()=>exportar(t)}>⬇ {t}</button>)}</div>
       <div className="hint" style={{marginTop:8}}>Cada jefatura también puede exportar sus ILD desde ILD → bandeja.</div></div>
@@ -1679,7 +1663,7 @@ function App(){
   const [user,setUser]=useState(()=>{ try{return JSON.parse(localStorage.getItem("pp_user"))}catch{return null} });
   const [view,setView]=useState("home"); const [toastMsg,setToastMsg]=useState(""); const [counts,setCounts]=useState({});
   const [foto,setFoto]=useState(null); const [gerr,setGerr]=useState(""); const [cfgVer,setCfgVer]=useState(0);
-  const [connected,setConnected]=useState(MODE!=="graph"); const [checking,setChecking]=useState(MODE==="graph");
+  const [authReady,setAuthReady]=useState(false); const [loggingIn,setLoggingIn]=useState(false); const [loginErr,setLoginErr]=useState("");
   const [notifs,setNotifs]=useState([]); const [notifOpen,setNotifOpen]=useState(false); const [detailIld,setDetailIld]=useState(null);
   const bump=()=>setCfgVer(v=>v+1);
   async function loadNotifs(u){ const who=u||user; if(!who) return;
@@ -1689,15 +1673,15 @@ function App(){
     try{ const ilds=await Store.read("ILD"); const rec=ilds.find(r=>r.id===n.ildId); if(rec) setDetailIld(rec); }catch{}
     setNotifOpen(false); loadNotifs();
   }
-  useEffect(()=>{ (async()=>{
-    if(MODE==="graph"){ const ok=await msEnsure(); setConnected(ok);
-      if(ok){ try{ applyIldConfig(await cfgRead()); }catch{}
-        try{ if(!localStorage.getItem("pp_hist_v1")){
-          if(ILD_SEED && ILD_SEED.length){ const cur=await Store.read("ILD"); if(!cur.length){ await Store.write("ILD",ILD_SEED); } }
-          localStorage.setItem("pp_hist_v1","1"); } }catch(e){}
-        bump(); } }
-    setChecking(false);
-  })(); },[]);
+  useEffect(()=>{
+    const unsub=onAuth(async(fbu)=>{
+      if(fbu){ try{ applyIldConfig(await cfgRead()); }catch(e){}
+        const prof=await loadProfile(fbu); setUser(prof); bump(); }
+      else { setUser(null); }
+      setAuthReady(true);
+    });
+    return ()=>{ try{ unsub&&unsub(); }catch(e){} };
+  },[]);
   const toast=m=>{ setToastMsg(m); const dur=/no se pudo|error|❌|403|falló|no encontr|presupuesto/i.test(m)?8000:2600; setTimeout(()=>setToastMsg(""),dur); };
   async function reloadCounts(u){ const who=u||user; if(!who) return;
     const il=await Store.read("ILD");
@@ -1706,19 +1690,14 @@ function App(){
     });
   }
   useEffect(()=>{ if(user){ reloadCounts(); loadNotifs(); } },[user,view,cfgVer]);
-  async function onLogin(u){ localStorage.setItem("pp_user",JSON.stringify(u)); setUser(u); setView("home"); }
-  function logout(){ localStorage.removeItem("pp_user"); setUser(null); setView("home"); }
-  if(MODE==="graph" && checking) return <div className="login"><div className="sun"></div><div className="lcard">
-    <div className="lbrand"><span className="dot"></span>WAO HOTELS - ILD's</div>
-    <div className="ltag" style={{marginBottom:0}}>Conectando con Google Drive…</div></div></div>;
-  if(MODE==="graph" && !connected) return <div className="login"><div className="sun"></div><div className="lcard">
-    <div className="lbrand"><span className="dot"></span>WAO HOTELS - ILD's</div>
-    <div className="ltag">Inicia sesión con tu cuenta de Google para usar la app. Todo se guarda en tu Google Drive.</div>
-    <button className="btn ocean block" onClick={()=>msSignIn()}>🔗 Iniciar sesión con Google</button>
-    {msErr && <div className="lerr" style={{marginTop:12,whiteSpace:"normal"}}>{msErr}</div>}
-    <button className="lback" onClick={()=>{localStorage.setItem("pp_mode","local");location.reload();}}>Usar modo demo local</button>
-  </div></div>;
-  if(!user) return <Login onLogin={onLogin}/>;
+  async function handleLogin(email,pass){ setLoginErr(""); setLoggingIn(true);
+    const ok=await msSignInEmail(email,pass); setLoggingIn(false);
+    if(!ok) setLoginErr(msErr||"No se pudo iniciar sesión"); return ok; }
+  async function logout(){ await msSignOut(); }
+  if(!authReady) return <div className="login"><div className="sun"></div><div className="lcard">
+    <div className="loginlogo"><img src={LOGO_B} alt="WAO HOTELS - ILD's"/></div>
+    <div className="ltag" style={{marginBottom:0}}>Cargando…</div></div></div>;
+  if(!user) return <Login onLogin={handleLogin} busy={loggingIn} err={loginErr}/>;
   const rolLbl={desarrollador:"Desarrollador",gerencia:"Gerencia",aprobador:"Aprobador",colaborador:"Colaborador"}[user.rol]||user.rol;
   const titles={ild:"ILD",admin:"Configuración"};
   return <div className="app">
