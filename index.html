@@ -264,7 +264,7 @@ applyGestiona();
 
 /* ===== CONFIG ===== */
 const APP = {
-  version: "WAO HOTELS · ILD's · v2.0 · Firebase",
+  version: "WAO HOTELS · ILD's · v2.1 · Firebase",
   useGraph: true,   // arranca conectado a Google Drive (Client ID ya fijado abajo). Hay botón "Usar modo demo local" si se necesita.
   g: {
     clientId: "734460790404-2pbc3jriungek7dk2d5di6050bc7l2ja.apps.googleusercontent.com",  // Client ID de WAO (no es secreto: va en el frontend)
@@ -493,6 +493,17 @@ async function diagListas(){ const out=[];
   catch(e){ out.push("❌ Escritura falló: "+(e.message||e)+"  (revisa las Reglas de Firestore)"); }
   out.push(""); out.push("Si todo sale ✅, la app guarda seguro en Firebase.");
   return out.join("\n"); }
+// ===== Gestión de usuarios (Firebase) =====
+function slugify(nombre){ return String(nombre||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,".").replace(/^\.+|\.+$/g,"").slice(0,30)||"user"; }
+const COLAB_DOM="@wao-ild.app";
+async function readDirectory(){ try{ if(!fbInit()) return []; const d=await fbDb.collection("public").doc("directory").get(); return d.exists?((d.data().colaboradores)||[]):[]; }catch(e){ return []; } }
+async function updateDirectory(){ try{ const snap=await fbDb.collection("users").where("rol","==","colaborador").get(); const list=snap.docs.map(d=>{const u=d.data();return {nombre:u.nombre||"",slug:u.slug||""};}).filter(x=>x.slug); await fbDb.collection("public").doc("directory").set({colaboradores:list}); }catch(e){} }
+async function listUsers(){ try{ if(!fbInit()) return []; const snap=await fbDb.collection("users").get(); return snap.docs.map(d=>d.data()); }catch(e){ return []; } }
+async function saveProfile(uid, prof){ await fbDb.collection("users").doc(uid).set(prof,{merge:true}); }
+async function signInColaborador(slug, code){ msErr=""; if(!fbInit()) return false; try{ await fbAuth.signInWithEmailAndPassword(slug+COLAB_DOM, code); return true; }catch(e){ msErr=fbAuthMsg(e); return false; } }
+async function createUserAccount(email, pass){ if(!fbInit()) throw new Error(msErr||"Firebase no disponible");
+  let sec; try{ sec=firebase.app("secondary"); }catch(e){ sec=firebase.initializeApp(FB_CONFIG,"secondary"); }
+  const cred=await sec.auth().createUserWithEmailAndPassword(email,pass); const uid=cred.user.uid; try{ await sec.auth().signOut(); }catch(e){} return uid; }
 // Código legible por proceso/año a partir del arreglo existente
 function nextCode(prefix, arr){
   const y=yr(); const n=arr.filter(x=>(x.Codigo||"").startsWith(prefix+"-"+y)).length+1;
@@ -594,22 +605,37 @@ function PhotoField({fotos,setFotos,multiple=true,label,req,hint,setFoto}){
 }
 
 /* ===== LOGIN (rediseñado) ===== */
-function Login({onLogin,busy,err}){
-  const [email,setEmail]=useState(""); const [pass,setPass]=useState(""); const [le,setLe]=useState("");
-  async function entrar(){ setLe(""); if(!email||!pass){ setLe("Escribe tu correo y contraseña"); return; }
-    const ok=await onLogin(email.trim(),pass); if(!ok) setLe(msErr||"No se pudo iniciar sesión"); }
-  return <div className="login">
-    <div className="sun"></div><div className="wave"></div>
+function Login({onLogin,onLoginColab,busy,err}){
+  const [modo,setModo]=useState("correo");
+  const [email,setEmail]=useState(""); const [pass,setPass]=useState("");
+  const [colabs,setColabs]=useState(null); const [nombre,setNombre]=useState(""); const [code,setCode]=useState("");
+  const [le,setLe]=useState("");
+  useEffect(()=>{ if(modo==="colab" && colabs===null){ readDirectory().then(l=>setColabs(l||[])); } },[modo,colabs]);
+  async function entrar(){ setLe("");
+    if(modo==="correo"){ if(!email||!pass){setLe("Escribe tu correo y contraseña");return;} const ok=await onLogin(email.trim(),pass); if(!ok) setLe(msErr||"No se pudo iniciar sesión"); }
+    else { const sel=(colabs||[]).find(c=>c.nombre===nombre); if(!sel){setLe("Selecciona tu nombre");return;} if(!code){setLe("Escribe tu código");return;} const ok=await onLoginColab(sel.slug,code); if(!ok) setLe(msErr||"Código incorrecto"); }
+  }
+  return <div className="login"><div className="sun"></div><div className="wave"></div>
     <div className="lcard">
       <div className="loginlogo"><img src={LOGO_B} alt="WAO HOTELS - ILD's"/></div>
       <div className="ltag">Inspección de Lista Diaria · WAO Hotels</div>
-      <input className="inp" style={{marginTop:12}} type="email" placeholder="Correo del hotel" value={email}
-        autoComplete="username" onChange={e=>setEmail(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")entrar();}}/>
-      <input className="inp" style={{marginTop:8}} type="password" placeholder="Contraseña" value={pass}
-        autoComplete="current-password" onChange={e=>setPass(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")entrar();}}/>
+      <div className="seg" style={{marginTop:10}}>
+        <button className={modo==="correo"?"on":""} onClick={()=>{setModo("correo");setLe("");}}>Correo</button>
+        <button className={modo==="colab"?"on":""} onClick={()=>{setModo("colab");setLe("");}}>Colaborador</button>
+      </div>
+      {modo==="correo" ? <React.Fragment>
+        <input className="inp" style={{marginTop:10}} type="email" placeholder="Correo del hotel" value={email} autoComplete="username" onChange={e=>setEmail(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")entrar();}}/>
+        <input className="inp" style={{marginTop:8}} type="password" placeholder="Contraseña" value={pass} autoComplete="current-password" onChange={e=>setPass(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")entrar();}}/>
+      </React.Fragment> : <React.Fragment>
+        <select className="inp" style={{marginTop:10}} value={nombre} onChange={e=>setNombre(e.target.value)}>
+          <option value="">{colabs===null?"Cargando…":"Selecciona tu nombre…"}</option>
+          {(colabs||[]).map(c=><option key={c.slug} value={c.nombre}>{c.nombre}</option>)}
+        </select>
+        <input className="inp" style={{marginTop:8}} type="password" inputMode="numeric" placeholder="Tu código" value={code} onChange={e=>setCode(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")entrar();}}/>
+      </React.Fragment>}
       <div className="lerr">{le||err||""}</div>
       <button className="btn primary block" style={{marginTop:10}} disabled={busy} onClick={entrar}>{busy?"Entrando…":"Ingresar"}</button>
-      <div className="hint" style={{textAlign:"center",marginTop:12}}>¿No tienes cuenta? Pídele al administrador que te la cree.</div>
+      <div className="hint" style={{textAlign:"center",marginTop:12}}>{modo==="correo"?"Aprobadores y gerencia entran con su correo del hotel.":"¿No apareces en la lista? Pídele al administrador que te cree."}</div>
     </div>
     <div className="lfoot">{APP.version}</div>
   </div>;
@@ -1591,6 +1617,82 @@ function DeleteRecords({toast}){
       <button className="btn red" style={{padding:"6px 11px",flex:"0 0 auto"}} onClick={()=>del(idOf(r))}>Eliminar</button></div>)}
     </div></div>;
 }
+function UserAdmin({toast}){
+  const [users,setUsers]=useState(null);
+  const [tipo,setTipo]=useState("colab");
+  const [nombre,setNombre]=useState(""); const [email,setEmail]=useState(""); const [pass,setPass]=useState(""); const [code,setCode]=useState("");
+  const [rol,setRol]=useState("colaborador"); const [areas,setAreas]=useState([]);
+  const [busy,setBusy]=useState(false); const [msg,setMsg]=useState("");
+  const areaOpts=Object.keys(AC);
+  async function load(){ setUsers(await listUsers()); }
+  useEffect(()=>{ load(); },[]);
+  function toggleArea(a){ setAreas(x=>x.includes(a)?x.filter(y=>y!==a):[...x,a]); }
+  async function crear(){ setMsg("");
+    if(!nombre.trim()){ setMsg("Escribe el nombre"); return; }
+    setBusy(true);
+    try{
+      if(tipo==="correo"){
+        if(!email.trim()||pass.length<6){ setMsg("Correo válido y contraseña de al menos 6 caracteres"); setBusy(false); return; }
+        const uid=await createUserAccount(email.trim().toLowerCase(),pass);
+        await saveProfile(uid,{uid,email:email.trim().toLowerCase(),nombre:nombre.trim(),rol,areas:(rol==="aprobador"?areas:[]),gestiona:[],tipo:"correo"});
+        setMsg("✅ Creado: "+nombre.trim()+" ("+email.trim().toLowerCase()+") — "+rol);
+      } else {
+        if(code.length<4){ setMsg("El código debe tener al menos 4 caracteres"); setBusy(false); return; }
+        const existing=(users||[]).map(u=>u.slug).filter(Boolean);
+        let base=slugify(nombre), slug=base, i=2; while(existing.includes(slug)){ slug=base+"-"+i; i++; }
+        const em=slug+"@wao-ild.app";
+        const uid=await createUserAccount(em,code);
+        await saveProfile(uid,{uid,email:em,nombre:nombre.trim(),rol:"colaborador",areas,gestiona:[],slug,tipo:"codigo"});
+        await updateDirectory();
+        setMsg("✅ Colaborador creado: "+nombre.trim()+"  ·  usuario interno: "+slug+"  ·  código: "+code+"  (anótalo y compártelo con la persona)");
+      }
+      setNombre("");setEmail("");setPass("");setCode("");setAreas([]);
+      await load();
+    }catch(e){ const c=(e&&e.code)||""; setMsg("❌ "+(c.includes("email-already-in-use")?"Ese usuario o correo ya existe.":(c.includes("weak-password")?"La contraseña es muy débil (mínimo 6).":(e.message||e)))); }
+    setBusy(false);
+  }
+  const rolLbl={desarrollador:"Desarrollador",gerencia:"Gerencia",aprobador:"Aprobador",colaborador:"Colaborador"};
+  const showAreas=(tipo==="colab")||(tipo==="correo"&&rol==="aprobador");
+  return <div className="card"><h3>👥 Usuarios del sistema</h3>
+    <div className="hint"><b>Aprobadores y gerencia</b> entran con correo del hotel + contraseña. <b>Colaboradores</b> (sin correo) entran eligiendo su nombre + un código; su usuario interno se genera solo.</div>
+    <div className="seg" style={{marginTop:10}}>
+      <button className={tipo==="colab"?"on":""} onClick={()=>{setTipo("colab");setRol("colaborador");setMsg("");}}>Colaborador (código)</button>
+      <button className={tipo==="correo"?"on":""} onClick={()=>{setTipo("correo");setRol("aprobador");setMsg("");}}>Aprobador / Gerencia (correo)</button>
+    </div>
+    <div style={{marginTop:10}}>
+      <input className="inp" placeholder="Nombre y apellido" value={nombre} onChange={e=>setNombre(e.target.value)}/>
+      {tipo==="correo" ? <React.Fragment>
+        <input className="inp" style={{marginTop:8}} type="email" placeholder="Correo del hotel (@amfcap.com o @waohotels.com)" value={email} onChange={e=>setEmail(e.target.value)}/>
+        <input className="inp" style={{marginTop:8}} type="text" placeholder="Contraseña provisional (mín. 6)" value={pass} onChange={e=>setPass(e.target.value)}/>
+        <select className="inp" style={{marginTop:8}} value={rol} onChange={e=>setRol(e.target.value)}>
+          <option value="aprobador">Aprobador</option>
+          <option value="gerencia">Gerencia</option>
+          <option value="desarrollador">Desarrollador (admin)</option>
+        </select>
+      </React.Fragment> : <React.Fragment>
+        <input className="inp" style={{marginTop:8}} type="text" inputMode="numeric" placeholder="Código de acceso (mín. 4)" value={code} onChange={e=>setCode(e.target.value)}/>
+      </React.Fragment>}
+      {showAreas && <div style={{marginTop:8}}>
+        <div className="hint" style={{marginBottom:4}}>Áreas asignadas {tipo==="colab"?"(que esta persona puede inspeccionar)":"(que este aprobador puede aprobar)"}:</div>
+        {!areaOpts.length && <div className="hint">Primero crea áreas en <b>ILD → Configurar</b>.</div>}
+        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+          {areaOpts.map(a=><button key={a} onClick={()=>toggleArea(a)} style={{padding:"4px 10px",borderRadius:999,border:"1px solid #d7dee2",background:areas.includes(a)?"var(--ocean)":"#fff",color:areas.includes(a)?"#fff":"#33474f",fontSize:12,cursor:"pointer"}}>{a}</button>)}
+        </div>
+      </div>}
+      <button className="btn primary" style={{marginTop:10}} disabled={busy} onClick={crear}>{busy?"Creando…":"➕ Crear usuario"}</button>
+      {msg && <div className="hint" style={{marginTop:8,whiteSpace:"normal"}}>{msg}</div>}
+    </div>
+    <div style={{marginTop:14,borderTop:"1px solid #eee",paddingTop:10}}>
+      <div className="hint" style={{marginBottom:6}}>Usuarios registrados:</div>
+      {users===null && <div className="hint">Cargando…</div>}
+      {users && !users.length && <div className="hint">Aún no hay usuarios.</div>}
+      {users && users.map((u,i)=><div key={u.uid||i} className="item">
+        <div><b>{u.nombre}</b> <span style={{color:"var(--muted)",fontSize:12}}>· {rolLbl[u.rol]||u.rol}{u.rol==="colaborador"&&u.slug?(" · "+u.slug):""}{(u.areas&&u.areas.length)?(" · "+u.areas.join(", ")):""}</span></div>
+      </div>)}
+      <div className="hint" style={{marginTop:8}}>Para cambiar el código de alguien o desactivar una cuenta, se hace en la consola de Firebase → Authentication. Crear personas nuevas se hace aquí.</div>
+    </div>
+  </div>;
+}
 function FotoCleanup({toast}){
   const [busy,setBusy]=useState(false); const [msg,setMsg]=useState("");
   async function limpiar(){ if(!confirm("¿Borrar las fotos de más de 2 meses? Se conservan los registros (cumplimiento, quién subió, quién aprobó, observaciones); solo se eliminan las imágenes para liberar espacio. Esta acción no se puede deshacer.")) return;
@@ -1653,8 +1755,7 @@ function Admin({user,toast}){
       <div className="hint" style={{marginTop:8}}>Cada jefatura también puede exportar sus ILD desde ILD → bandeja.</div></div>
         <DeleteRecords toast={toast}/>
     <ReasignarResp toast={toast}/>
-    <div className="card"><h3>👥 Usuarios y aprobadores</h3>
-      <div className="hint">La gestión de colaboradores, áreas asignadas, PINs y aprobadores se hace en <b>ILD → Configurar</b> (rol Desarrollador). Personalización de checklists en <b>ILD → Checklist</b>.</div></div>
+    <UserAdmin toast={toast}/>
   </div>;
 }
 
@@ -1676,7 +1777,9 @@ function App(){
   useEffect(()=>{
     const unsub=onAuth(async(fbu)=>{
       if(fbu){ try{ applyIldConfig(await cfgRead()); }catch(e){}
-        const prof=await loadProfile(fbu); setUser(prof); bump(); }
+        const prof=await loadProfile(fbu);
+        try{ const all=await listUsers(); if(all&&all.length){ USERS.length=0; all.forEach(x=>USERS.push(x)); if(typeof applyGestiona==="function") applyGestiona(); } }catch(e){}
+        setUser(prof); bump(); }
       else { setUser(null); }
       setAuthReady(true);
     });
@@ -1693,11 +1796,14 @@ function App(){
   async function handleLogin(email,pass){ setLoginErr(""); setLoggingIn(true);
     const ok=await msSignInEmail(email,pass); setLoggingIn(false);
     if(!ok) setLoginErr(msErr||"No se pudo iniciar sesión"); return ok; }
+  async function handleLoginColab(slug,code){ setLoginErr(""); setLoggingIn(true);
+    const ok=await signInColaborador(slug,code); setLoggingIn(false);
+    if(!ok) setLoginErr(msErr||"Código incorrecto"); return ok; }
   async function logout(){ await msSignOut(); }
   if(!authReady) return <div className="login"><div className="sun"></div><div className="lcard">
     <div className="loginlogo"><img src={LOGO_B} alt="WAO HOTELS - ILD's"/></div>
     <div className="ltag" style={{marginBottom:0}}>Cargando…</div></div></div>;
-  if(!user) return <Login onLogin={handleLogin} busy={loggingIn} err={loginErr}/>;
+  if(!user) return <Login onLogin={handleLogin} onLoginColab={handleLoginColab} busy={loggingIn} err={loginErr}/>;
   const rolLbl={desarrollador:"Desarrollador",gerencia:"Gerencia",aprobador:"Aprobador",colaborador:"Colaborador"}[user.rol]||user.rol;
   const titles={ild:"ILD",admin:"Configuración"};
   return <div className="app">
