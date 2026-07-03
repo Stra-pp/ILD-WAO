@@ -264,7 +264,7 @@ applyGestiona();
 
 /* ===== CONFIG ===== */
 const APP = {
-  version: "WAO HOTELS · ILD's · v2.2 · Firebase",
+  version: "WAO HOTELS · ILD's · v2.3 · Firebase",
   useGraph: true,   // arranca conectado a Google Drive (Client ID ya fijado abajo). Hay botón "Usar modo demo local" si se necesita.
   g: {
     clientId: "734460790404-2pbc3jriungek7dk2d5di6050bc7l2ja.apps.googleusercontent.com",  // Client ID de WAO (no es secreto: va en el frontend)
@@ -1285,7 +1285,7 @@ function ILDConfig({user,toast,onSave}){
     {sec==="ilds" && <ILDBuilder user={user} toast={toast} onSave={onSave}/>}
     {sec==="grupos" && <GruposEditor toast={toast} onSave={onSave}/>}
     {sec==="local" && <LocalidadesEditor toast={toast} onSave={onSave}/>}
-    {sec==="usuarios" && <UsuariosEditor toast={toast} onSave={onSave}/>}
+    {sec==="usuarios" && <UserAdmin toast={toast}/>}
     {sec==="dias" && <DiasEsperadosEditor user={user} toast={toast} onSave={onSave}/>}
   </div>;
 }
@@ -1789,7 +1789,7 @@ function Admin({user,toast}){
       <div className="hint" style={{marginTop:8}}>Cada jefatura también puede exportar sus ILD desde ILD → bandeja.</div></div>
         <DeleteRecords toast={toast}/>
     <ReasignarResp toast={toast}/>
-    <UserAdmin toast={toast}/>
+    
   </div>;
 }
 
