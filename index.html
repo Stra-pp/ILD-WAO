@@ -264,7 +264,7 @@ applyGestiona();
 
 /* ===== CONFIG ===== */
 const APP = {
-  version: "WAO HOTELS · ILD's · v2.1 · Firebase",
+  version: "WAO HOTELS · ILD's · v2.2 · Firebase",
   useGraph: true,   // arranca conectado a Google Drive (Client ID ya fijado abajo). Hay botón "Usar modo demo local" si se necesita.
   g: {
     clientId: "734460790404-2pbc3jriungek7dk2d5di6050bc7l2ja.apps.googleusercontent.com",  // Client ID de WAO (no es secreto: va en el frontend)
@@ -464,11 +464,12 @@ let _fbUser=null;
 async function loadProfile(fbu){
   try{ const d=await fbDb.collection("users").doc(fbu.uid).get();
     if(d.exists) return Object.assign({uid:fbu.uid,email:fbu.email}, d.data());
-    const esAdmin=(fbu.email||"").toLowerCase()==="shirley@waohotels.com";
-    const prof={ uid:fbu.uid, email:fbu.email, nombre:esAdmin?"Shirley":(fbu.email||"").split("@")[0],
-      rol: esAdmin?"desarrollador":"aprobador", areas: esAdmin?[]:Object.keys((typeof AC!=="undefined"&&AC)||{}), gestiona:[] };
-    try{ await fbDb.collection("users").doc(fbu.uid).set(prof); }catch(e){}
-    return prof;
+    if((fbu.email||"").toLowerCase()==="shirley@waohotels.com"){
+      const prof={ uid:fbu.uid, email:fbu.email, nombre:"Shirley", rol:"desarrollador", areas:[], gestiona:[], tipo:"correo" };
+      try{ await fbDb.collection("users").doc(fbu.uid).set(prof); }catch(e){}
+      return prof;
+    }
+    return null;   // cuenta sin ficha (eliminada o no configurada) -> sin acceso
   }catch(e){ return null; }
 }
 function onAuth(cb){ if(!fbInit()){ setTimeout(()=>cb(null),0); return ()=>{}; }
@@ -1624,6 +1625,16 @@ function UserAdmin({toast}){
   const [rol,setRol]=useState("colaborador"); const [areas,setAreas]=useState([]);
   const [busy,setBusy]=useState(false); const [msg,setMsg]=useState("");
   const areaOpts=Object.keys(AC);
+  const [editUid,setEditUid]=useState(""); const [eNombre,setENombre]=useState(""); const [eRol,setERol]=useState(""); const [eAreas,setEAreas]=useState([]);
+  function abrirEdit(u){ setEditUid(u.uid); setENombre(u.nombre||""); setERol(u.rol); setEAreas(u.areas||[]); setMsg(""); }
+  function toggleEArea(a){ setEAreas(x=>x.includes(a)?x.filter(y=>y!==a):[...x,a]); }
+  async function guardarEdit(u){ setBusy(true); setMsg("");
+    try{ await saveProfile(u.uid,{nombre:eNombre.trim(),rol:eRol,areas:(eRol==="aprobador"||eRol==="colaborador")?eAreas:[]}); await updateDirectory(); setMsg("✅ Cambios guardados."); setEditUid(""); await load(); }
+    catch(e){ setMsg("❌ "+(e.message||e)); } setBusy(false); }
+  async function eliminar(u){ if(!confirm("¿Quitar a "+u.nombre+" del sistema? Ya no podrá ingresar ni aparecerá en las listas. Para borrar del todo su acceso, elimina también la cuenta en Firebase → Authentication.")) return;
+    setBusy(true); setMsg("");
+    try{ await fbDb.collection("users").doc(u.uid).delete(); await updateDirectory(); setMsg("✅ Usuario quitado del sistema."); setEditUid(""); await load(); }
+    catch(e){ setMsg("❌ "+(e.message||e)); } setBusy(false); }
   async function load(){ setUsers(await listUsers()); }
   useEffect(()=>{ load(); },[]);
   function toggleArea(a){ setAreas(x=>x.includes(a)?x.filter(y=>y!==a):[...x,a]); }
@@ -1687,7 +1698,30 @@ function UserAdmin({toast}){
       {users===null && <div className="hint">Cargando…</div>}
       {users && !users.length && <div className="hint">Aún no hay usuarios.</div>}
       {users && users.map((u,i)=><div key={u.uid||i} className="item">
-        <div><b>{u.nombre}</b> <span style={{color:"var(--muted)",fontSize:12}}>· {rolLbl[u.rol]||u.rol}{u.rol==="colaborador"&&u.slug?(" · "+u.slug):""}{(u.areas&&u.areas.length)?(" · "+u.areas.join(", ")):""}</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+          <div><b>{u.nombre}</b> <span style={{color:"var(--muted)",fontSize:12}}>· {rolLbl[u.rol]||u.rol}{u.rol==="colaborador"&&u.slug?(" · "+u.slug):""}{(u.areas&&u.areas.length)?(" · "+u.areas.join(", ")):""}</span></div>
+          <button className="btn ghost" style={{padding:"3px 10px",fontSize:12}} onClick={()=>editUid===u.uid?setEditUid(""):abrirEdit(u)}>{editUid===u.uid?"Cerrar":"Editar"}</button>
+        </div>
+        {editUid===u.uid && <div style={{marginTop:8,padding:10,background:"#f6f8f9",borderRadius:8}}>
+          <input className="inp" placeholder="Nombre" value={eNombre} onChange={e=>setENombre(e.target.value)}/>
+          <select className="inp" style={{marginTop:8}} value={eRol} onChange={e=>setERol(e.target.value)}>
+            <option value="colaborador">Colaborador</option>
+            <option value="aprobador">Aprobador</option>
+            <option value="gerencia">Gerencia</option>
+            <option value="desarrollador">Desarrollador (admin)</option>
+          </select>
+          {(eRol==="aprobador"||eRol==="colaborador") && <div style={{marginTop:8}}>
+            <div className="hint" style={{marginBottom:4}}>Áreas asignadas:</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+              {areaOpts.map(a=><button key={a} onClick={()=>toggleEArea(a)} style={{padding:"4px 10px",borderRadius:999,border:"1px solid #d7dee2",background:eAreas.includes(a)?"var(--ocean)":"#fff",color:eAreas.includes(a)?"#fff":"#33474f",fontSize:12,cursor:"pointer"}}>{a}</button>)}
+            </div>
+          </div>}
+          <div style={{display:"flex",gap:8,marginTop:10}}>
+            <button className="btn primary" style={{padding:"5px 12px"}} disabled={busy} onClick={()=>guardarEdit(u)}>Guardar</button>
+            <button className="btn ghost" style={{padding:"5px 12px",color:"#c0392b"}} disabled={busy} onClick={()=>eliminar(u)}>Eliminar</button>
+          </div>
+          <div className="hint" style={{marginTop:8}}>El nombre, rol y áreas se editan aquí. La contraseña o el código se cambian en Firebase → Authentication.</div>
+        </div>}
       </div>)}
       <div className="hint" style={{marginTop:8}}>Para cambiar el código de alguien o desactivar una cuenta, se hace en la consola de Firebase → Authentication. Crear personas nuevas se hace aquí.</div>
     </div>
@@ -1776,8 +1810,9 @@ function App(){
   }
   useEffect(()=>{
     const unsub=onAuth(async(fbu)=>{
-      if(fbu){ try{ applyIldConfig(await cfgRead()); }catch(e){}
-        const prof=await loadProfile(fbu);
+      if(fbu){ const prof=await loadProfile(fbu);
+        if(!prof){ setLoginErr("Tu cuenta no está configurada o fue desactivada. Contacta al administrador."); setUser(null); try{ if(fbAuth) await fbAuth.signOut(); }catch(e){} return; }
+        try{ applyIldConfig(await cfgRead()); }catch(e){}
         try{ const all=await listUsers(); if(all&&all.length){ USERS.length=0; all.forEach(x=>USERS.push(x)); if(typeof applyGestiona==="function") applyGestiona(); } }catch(e){}
         setUser(prof); bump(); }
       else { setUser(null); }
