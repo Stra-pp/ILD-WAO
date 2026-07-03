@@ -263,14 +263,12 @@ applyGestiona();
 /* ===== CONFIG ===== */
 const APP = {
   version: "WAO HOTELS · ILD's · v1.2 · Google Drive",
-  useGraph: false,   // arranca en DEMO LOCAL (ve las vistas sin conectar). Activa Google en Configuración → Conectar a Google Drive.
+  useGraph: true,   // arranca conectado a Google Drive (Client ID ya fijado abajo). Hay botón "Usar modo demo local" si se necesita.
   g: {
-    clientId: "",
+    clientId: "734460790404-2pbc3jriungek7dk2d5di6050bc7l2ja.apps.googleusercontent.com",  // Client ID de WAO (no es secreto: va en el frontend)
     rootFolder: "WAO_NEXO",
     fotosFolder: "Fotos",
-    files: { ILD:"NEXO_ILD.json", Compras:"NEXO_Compras.json",
-             Sistemas:"NEXO_Sistemas.json", Mantenimiento:"NEXO_Mantenimiento.json",
-             ILD_Config:"NEXO_Config.json", Notif:"NEXO_Notif.json" }
+    files: { ILD:"NEXO_ILD.json", ILD_Config:"NEXO_Config.json", Notif:"NEXO_Notif.json" }
   },
   ms: { base:"", fotosFolder:"Fotos", files:{}, lists:{} }
 };
