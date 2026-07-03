@@ -264,7 +264,7 @@ applyGestiona();
 
 /* ===== CONFIG ===== */
 const APP = {
-  version: "WAO HOTELS · ILD's · v2.3 · Firebase",
+  version: "WAO HOTELS · ILD's · v2.4 · Firebase",
   useGraph: true,   // arranca conectado a Google Drive (Client ID ya fijado abajo). Hay botón "Usar modo demo local" si se necesita.
   g: {
     clientId: "734460790404-2pbc3jriungek7dk2d5di6050bc7l2ja.apps.googleusercontent.com",  // Client ID de WAO (no es secreto: va en el frontend)
@@ -619,7 +619,7 @@ function Login({onLogin,onLoginColab,busy,err}){
   return <div className="login"><div className="sun"></div><div className="wave"></div>
     <div className="lcard">
       <div className="loginlogo"><img src={LOGO_B} alt="WAO HOTELS - ILD's"/></div>
-      <div className="ltag">Inspección de Lista Diaria · WAO Hotels</div>
+      <div className="ltag">Índices Logísticos Diarios · WAO Hotels</div>
       <div className="seg" style={{marginTop:10}}>
         <button className={modo==="correo"?"on":""} onClick={()=>{setModo("correo");setLe("");}}>Correo</button>
         <button className={modo==="colab"?"on":""} onClick={()=>{setModo("colab");setLe("");}}>Colaborador</button>
@@ -644,7 +644,7 @@ function Login({onLogin,onLoginColab,busy,err}){
 /* ===== HOME ===== */
 function Home({user,go,counts}){
   const tiles=[];
-  if(puede(user,'ild')) tiles.push({id:"ild",t:"ILD",d:"Inspección de lista diaria",ico:"📋",col:"--ocean"});
+  if(puede(user,'ild')) tiles.push({id:"ild",t:"ILD",d:"Índices logísticos diarios",ico:"📋",col:"--ocean"});
   if(esDev(user)) tiles.push({id:"admin",t:"Configuración",d:"Usuarios y conexión",ico:"⚙️",col:"--muted"});
   return <div>
     <h1 className="h1">Hola, {user.nombre.split(" ")[0]} 👋</h1>
@@ -673,8 +673,8 @@ function ILD({user,toast,setFoto,bump}){
   useEffect(()=>{load();},[]);
   const guardarCfg=()=>{ cfgSave(); bump&&bump(); };
   return <div>
-    <h1 className="h1">ILD · Inspección diaria</h1>
-    <p className="sub">Lista de verificación por área y turno.</p>
+    <h1 className="h1">ILD · Índices Logísticos Diarios</h1>
+    <p className="sub">Índices logísticos por área y turno.</p>
     {(showNuevo||puedeRevisar||showChecklist||esDevv) && <div className="seg">
       {showNuevo && <button className={tab==="nuevo"?"on":""} onClick={()=>setTab("nuevo")}>Nuevo</button>}
       {showNuevo && <button className={tab==="mios"?"on":""} onClick={()=>{setTab("mios");load();}}>Mis ILD</button>}
@@ -1416,50 +1416,66 @@ function AprobadoresEditor({toast,onSave}){
 function ResumenGerencialILD(){
   const now=new Date();
   const [anio,setAnio]=useState(now.getFullYear()); const [mes,setMes]=useState(now.getMonth());
+  const [sede,setSede]=useState("todas");
   const [regs,setRegs]=useState([]); const [cargando,setCargando]=useState(true);
   const anios=[now.getFullYear()-2,now.getFullYear()-1,now.getFullYear()];
   const MESES=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   useEffect(()=>{ let v=true; (async()=>{ setCargando(true);
     try{ const d=mes==null?await Store.readAnio("ILD",anio):await Store.readMes("ILD",anio,mes); if(v)setRegs(d); }
     catch(e){ if(v)setRegs([]); } finally{ if(v)setCargando(false); } })(); return ()=>{v=false;}; },[anio,mes]);
+  const regsF = sede==="todas" ? regs : regs.filter(r=>(r.localidad||"")===sede);
   const byArea={};
-  regs.forEach(r=>{ const a=r.area||"(sin área)"; const g=(byArea[a]=byArea[a]||{label:a,total:0,aprob:0,obs:0,pend:0});
+  regsF.forEach(r=>{ const a=r.area||"(sin área)"; const g=(byArea[a]=byArea[a]||{label:a,total:0,aprob:0,obs:0,pend:0});
     g.total++; if(r.estado==="Aprobado")g.aprob++; else if(r.estado==="Con observaciones")g.obs++; else g.pend++; });
   const arr=Object.values(byArea).map(g=>({...g, cumpl:g.total?Math.round((g.aprob+g.obs)/g.total*100):0}));
-  const tot=regs.length, tAprob=arr.reduce((s,g)=>s+g.aprob,0), tObs=arr.reduce((s,g)=>s+g.obs,0);
+  const tot=regsF.length, tAprob=arr.reduce((s,g)=>s+g.aprob,0), tObs=arr.reduce((s,g)=>s+g.obs,0);
+  const tPend=tot-tAprob-tObs;
   const cumplGlobal=tot?Math.round((tAprob+tObs)/tot*100):0;
   const masCumplen=[...arr].sort((a,b)=>b.cumpl-a.cumpl||b.total-a.total).slice(0,10).map(g=>({label:g.label,value:g.cumpl}));
   const masObs=[...arr].filter(g=>g.obs>0).sort((a,b)=>b.obs-a.obs).slice(0,10).map(g=>({label:g.label,value:g.obs}));
   const masPend=[...arr].filter(g=>g.pend>0).sort((a,b)=>b.pend-a.pend).slice(0,10).map(g=>({label:g.label,value:g.pend}));
+  const obsTipos={};
+  regsF.forEach(r=>{ let items=[]; try{ items=itemsDe(r); }catch(e){ items=[]; }
+    items.forEach((it,i)=>{ let tp=""; try{ tp=itemTipo(it); }catch(e){}
+      if(tp==='sino' && r.checks && r.checks['yn-'+i]==='no'){ let t=itemText(it)||"(ítem)"; obsTipos[t]=(obsTipos[t]||0)+1; } }); });
+  const masTiposObs=Object.entries(obsTipos).map(([label,value])=>({label: label.length>42?label.slice(0,42)+"…":label, value})).sort((a,b)=>b.value-a.value).slice(0,10);
+  const estadosData=[{label:"Aprobados",value:tAprob},{label:"Con observaciones",value:tObs},{label:"Pendientes",value:tPend}];
   const tabla=[...arr].sort((a,b)=>b.total-a.total);
+  const sedeLbl = sede==="todas" ? "todas las sedes" : sede;
   return <div>
-    <h2 style={{margin:"4px 0 2px"}}>Resumen Gerencial de ILD</h2>
-    <p className="sub">Cumplimiento y observaciones por área.</p>
+    <h2 style={{margin:"4px 0 2px"}}>Resumen Gerencial · Índices Logísticos Diarios</h2>
+    <p className="sub">Cumplimiento y observaciones por área — {sedeLbl}.</p>
+    <div className="seg" style={{flexWrap:"wrap"}}>
+      <button className={sede==="todas"?"on":""} onClick={()=>setSede("todas")}>Todas las sedes</button>
+      {LOCALIDADES.map(l=><button key={l} className={sede===l?"on":""} onClick={()=>setSede(l)}>{l}</button>)}
+    </div>
     <div className="seg" style={{flexWrap:"wrap"}}>{anios.map(a=><button key={a} className={anio===a?"on":""} onClick={()=>setAnio(a)}>{a}</button>)}</div>
     <div className="seg" style={{flexWrap:"wrap"}}><button className={mes==null?"on":""} onClick={()=>setMes(null)}>Año</button>
       {MESES.map((m,i)=><button key={m} className={mes===i?"on":""} onClick={()=>setMes(i)}>{m}</button>)}</div>
-    {cargando ? <div className="hint" style={{padding:"20px 0"}}>Cargando…</div> : <>
+    {cargando ? <div className="hint" style={{padding:"20px 0"}}>Cargando…</div> : <React.Fragment>
       <div className="kpis">
         <KpiBox label="ILD del período" value={tot} color={cssVar("--ocean")}/>
         <KpiBox label="Aprobados" value={tAprob} color={cssVar("--green")}/>
         <KpiBox label="Con observaciones" value={tObs} color={cssVar("--amber")}/>
         <KpiBox label="% Cumplimiento" value={cumplGlobal+"%"} color={cumplGlobal>=80?cssVar("--green"):cssVar("--coral")}/>
       </div>
-      <div className="card"><h3>Areas que mas cumplen (%)</h3><BarsH data={masCumplen} color="var(--green)"/></div>
-      <div className="card"><h3>Areas con mas observaciones</h3><BarsH data={masObs} color="var(--amber)"/></div>
-      <div className="card"><h3>Areas con mas pendientes</h3><BarsH data={masPend} color="var(--coral)"/></div>
-      <div className="card"><h3>Detalle por area</h3>
+      <div className="card"><h3>Distribución de estados</h3><BarsH data={estadosData} color="var(--ocean)"/></div>
+      <div className="card"><h3>Áreas con más observaciones</h3>{masObs.length?<BarsH data={masObs} color="var(--amber)"/>:<div className="hint">Sin observaciones en el período.</div>}</div>
+      <div className="card"><h3>Tipos de observación más frecuentes</h3>{masTiposObs.length?<BarsH data={masTiposObs} color="var(--coral)"/>:<div className="hint">Sin ítems marcados “No” en el período.</div>}</div>
+      <div className="card"><h3>Áreas que más cumplen (%)</h3>{masCumplen.length?<BarsH data={masCumplen} color="var(--green)"/>:<div className="hint">Sin datos.</div>}</div>
+      <div className="card"><h3>Áreas con más pendientes</h3>{masPend.length?<BarsH data={masPend} color="var(--coral)"/>:<div className="hint">Sin pendientes.</div>}</div>
+      <div className="card"><h3>Detalle por área</h3>
         <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
           <thead><tr style={{borderBottom:"2px solid var(--ocean)"}}>
-            {["Area","Total","Aprob.","Obs.","Pend.","Cumpl."].map(h=><th key={h} style={{textAlign:h==="Area"?"left":"center",padding:"6px 4px"}}>{h}</th>)}</tr></thead>
+            {["Área","Total","Aprob.","Obs.","Pend.","Cumpl."].map(h=><th key={h} style={{textAlign:h==="Área"?"left":"center",padding:"6px 4px"}}>{h}</th>)}</tr></thead>
           <tbody>{tabla.map(g=><tr key={g.label} style={{borderBottom:"1px solid #f0ece3"}}>
             <td style={{padding:"6px 4px"}}>{g.label}</td>
             <td style={{textAlign:"center"}}>{g.total}</td><td style={{textAlign:"center",fontWeight:700}}>{g.aprob}</td>
             <td style={{textAlign:"center",color:"#b8860b"}}>{g.obs}</td><td style={{textAlign:"center",color:"var(--coral)"}}>{g.pend}</td>
             <td style={{textAlign:"center",fontWeight:800}}>{g.cumpl}%</td></tr>)}
-            {!tabla.length && <tr><td colSpan={6} className="hint" style={{padding:"14px 0",textAlign:"center"}}>Sin datos en el periodo</td></tr>}</tbody>
+            {!tabla.length && <tr><td colSpan={6} className="hint" style={{padding:"14px 0",textAlign:"center"}}>Sin datos en el período</td></tr>}</tbody>
         </table></div></div>
-    </>}
+    </React.Fragment>}
   </div>;
 }
 /* ===== TABLEROS EN TIEMPO REAL (Compras / Sistemas / Mantenimiento) ===== */
