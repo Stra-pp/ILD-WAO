@@ -264,7 +264,7 @@ applyGestiona();
 
 /* ===== CONFIG ===== */
 const APP = {
-  version: "WAO HOTELS · ILD's · v2.9 · Firebase",
+  version: "WAO HOTELS · ILD's · v3.0 · Firebase",
   useGraph: true,   // arranca conectado a Google Drive (Client ID ya fijado abajo). Hay botón "Usar modo demo local" si se necesita.
   g: {
     clientId: "734460790404-2pbc3jriungek7dk2d5di6050bc7l2ja.apps.googleusercontent.com",  // Client ID de WAO (no es secreto: va en el frontend)
@@ -518,7 +518,12 @@ function nextCode(prefix, arr){
 
 /* ===== CONFIGURACIÓN ILD (checklist, áreas, aprobadores, usuarios, días esperados) ===== */
 const DIAS_CFG = { feriados:[], areas:{} };  // areas[area] = {patron:'diario'|'finde'|'vsd'|'personalizado', dias:[0..6]}
+const METAS = {};  // metas["YYYY-MM"] = { area: esperados }  (congelado al cerrar el mes)
+const mesKey=(y,m)=>y+"-"+String(m+1).padStart(2,"0");
+function mesCerrado(y,m){ return !!METAS[mesKey(y,m)]; }
+function snapshotMes(y,m){ const k=mesKey(y,m); const snap={}; Object.keys(AC).forEach(a=>{ snap[a]=diasEsperados(a,y,m,false); }); METAS[k]=snap; return k; }
 function patronDias(p){ return p==='finde'?[0,6]:p==='vsd'?[0,5,6]:p==='diario'?[0,1,2,3,4,5,6]:null; }
+function esperadosMes(area,y,m,hastaHoy){ const k=mesKey(y,m); if(METAS[k]&&METAS[k][area]!=null) return METAS[k][area]; return diasEsperados(area,y,m,hastaHoy); }
 function diasEsperados(area,year,month,hastaHoy){
   const cfg=DIAS_CFG.areas[area]||{patron:'diario'};
   if(cfg.patron==='evento') return Number(cfg.mes)||0;
@@ -538,12 +543,13 @@ function applyIldConfig(cfg){ if(!cfg) return;
   if(cfg.checklist){ Object.keys(CL).forEach(k=>delete CL[k]); Object.assign(CL, cfg.checklist); }
   if(cfg.aprobadores){ Object.keys(APR).forEach(k=>delete APR[k]); Object.assign(APR, cfg.aprobadores); }
   if(cfg.diasCfg){ DIAS_CFG.feriados=cfg.diasCfg.feriados||[]; DIAS_CFG.areas=cfg.diasCfg.areas||{}; }
+  if(cfg.metas){ Object.keys(METAS).forEach(k=>delete METAS[k]); Object.assign(METAS, cfg.metas); }
   if(Array.isArray(cfg.usuarios) && cfg.usuarios.length){ USERS.length=0; cfg.usuarios.forEach(u=>USERS.push(u)); applyGestiona(); }
   if(cfg.accesos) ACCESOS=cfg.accesos;
   if(cfg.amodo) AMODO=cfg.amodo;
   if(Array.isArray(cfg.localidades)){ LOCALIDADES.length=0; cfg.localidades.forEach(x=>LOCALIDADES.push(x)); }
   if(Array.isArray(cfg.grupos)){ GRUPOS.length=0; cfg.grupos.forEach(x=>GRUPOS.push(x)); } }
-async function cfgSave(){ await Store.write("ILD_Config",{checklist:CL,areas:AC,aprobadores:APR,usuarios:USERS,diasCfg:DIAS_CFG,accesos:ACCESOS,amodo:AMODO,localidades:LOCALIDADES,grupos:GRUPOS}); }
+async function cfgSave(){ await Store.write("ILD_Config",{checklist:CL,areas:AC,aprobadores:APR,usuarios:USERS,diasCfg:DIAS_CFG,metas:METAS,accesos:ACCESOS,amodo:AMODO,localidades:LOCALIDADES,grupos:GRUPOS}); }
 // Aplica configuración guardada en modo local (demo) al cargar
 try{ const raw=localStorage.getItem("pp_ILD_Config");
   if(raw){ const c=JSON.parse(raw); if(c && !Array.isArray(c)) applyIldConfig(c); } }catch{}
@@ -966,7 +972,7 @@ function ILDDetail({user,r,onClose,reload,toast,setFoto}){
   const puedeNotaGer=(esGer||esDevv) && r.estado!=='Pendiente';
   const esAutor = user.nombre===r.usuario;
   const [nota,setNota]=useState(r.notaJef||""); const [notaGer,setNotaGer]=useState(r.notaGerencia||"");
-  const [accQue,setAccQue]=useState((r.accion&&r.accion.que)||""); const [accQuien,setAccQuien]=useState((r.accion&&r.accion.quien)||""); const [accCuando,setAccCuando]=useState((r.accion&&r.accion.cuando)||"");
+  const [accQue,setAccQue]=useState((r.accion&&r.accion.que)||""); const [accQuien,setAccQuien]=useState((r.accion&&r.accion.quien)||r.usuario||""); const [accCuando,setAccCuando]=useState((r.accion&&r.accion.cuando)||""); const [modoObs,setModoObs]=useState(false);
   const [fixFotos,setFixFotos]=useState([]); const corr=r.correccion||null;
   async function setEstado(ok){
     if(!ok && (!accQue.trim()||!accQuien.trim()||!accCuando)){ toast("Para 'Con obs.' indica: qué se corrige, quién y para cuándo"); return; }
@@ -1051,26 +1057,34 @@ function ILDDetail({user,r,onClose,reload,toast,setFoto}){
     {puedeAprobar && r.estado==='Pendiente' && <div className="card" style={{marginTop:12}}>
       <h3>👔 Aprobación</h3>
       <textarea className="inp" placeholder="Observación (opcional)…" value={nota} onChange={e=>setNota(e.target.value)}/>
-      <div className="hint" style={{marginTop:8,marginBottom:4}}>Si marcas <b>Con obs.</b>, indica la acción correctiva:</div>
-      <input className="inp" placeholder="¿Qué se va a corregir?" value={accQue} onChange={e=>setAccQue(e.target.value)}/>
-      <div className="row" style={{marginTop:6}}>
-        <input className="inp" style={{flex:1}} placeholder="¿Quién?" value={accQuien} onChange={e=>setAccQuien(e.target.value)}/>
-        <input className="inp" style={{flex:1}} type="date" value={accCuando} onChange={e=>setAccCuando(e.target.value)}/>
-      </div>
-      <div className="row" style={{marginTop:10}}>
+      {!modoObs ? <div className="row" style={{marginTop:10}}>
         <button className="btn green" onClick={()=>setEstado(true)}>✅ Aprobar</button>
-        <button className="btn amber" onClick={()=>setEstado(false)}>📝 Con obs.</button></div></div>}
+        <button className="btn amber" onClick={()=>setModoObs(true)}>📝 Con obs.</button></div>
+      : <div style={{marginTop:10}}>
+        <div className="hint" style={{marginBottom:4}}>Acción correctiva:</div>
+        <input className="inp" placeholder="¿Qué se va a corregir?" value={accQue} onChange={e=>setAccQue(e.target.value)}/>
+        <div className="row" style={{marginTop:6}}>
+          <input className="inp" style={{flex:1}} placeholder="¿Quién?" value={accQuien} onChange={e=>setAccQuien(e.target.value)}/>
+          <input className="inp" style={{flex:1}} type="date" value={accCuando} onChange={e=>setAccCuando(e.target.value)}/></div>
+        <div className="row" style={{marginTop:10}}>
+          <button className="btn amber" onClick={()=>setEstado(false)}>📝 Guardar con observaciones</button>
+          <button className="btn" style={{background:"#eee",color:"#555"}} onClick={()=>setModoObs(false)}>Cancelar</button></div></div>}
+    </div>}
     {puedeReAprobar && <div className="card" style={{marginTop:12}}><h3>🔄 Modificar evaluación</h3>
       <textarea className="inp" value={nota} onChange={e=>setNota(e.target.value)}/>
-      <div className="hint" style={{marginTop:8,marginBottom:4}}>Si marcas <b>Con obs.</b>, indica la acción correctiva:</div>
-      <input className="inp" placeholder="¿Qué se va a corregir?" value={accQue} onChange={e=>setAccQue(e.target.value)}/>
-      <div className="row" style={{marginTop:6}}>
-        <input className="inp" style={{flex:1}} placeholder="¿Quién?" value={accQuien} onChange={e=>setAccQuien(e.target.value)}/>
-        <input className="inp" style={{flex:1}} type="date" value={accCuando} onChange={e=>setAccCuando(e.target.value)}/>
-      </div>
-      <div className="row" style={{marginTop:10}}>
+      {!modoObs ? <div className="row" style={{marginTop:10}}>
         <button className="btn green" onClick={()=>setEstado(true)}>Cambiar a Aprobado</button>
-        <button className="btn amber" onClick={()=>setEstado(false)}>Cambiar a Con obs.</button></div></div>}
+        <button className="btn amber" onClick={()=>setModoObs(true)}>Cambiar a Con obs.</button></div>
+      : <div style={{marginTop:10}}>
+        <div className="hint" style={{marginBottom:4}}>Acción correctiva:</div>
+        <input className="inp" placeholder="¿Qué se va a corregir?" value={accQue} onChange={e=>setAccQue(e.target.value)}/>
+        <div className="row" style={{marginTop:6}}>
+          <input className="inp" style={{flex:1}} placeholder="¿Quién?" value={accQuien} onChange={e=>setAccQuien(e.target.value)}/>
+          <input className="inp" style={{flex:1}} type="date" value={accCuando} onChange={e=>setAccCuando(e.target.value)}/></div>
+        <div className="row" style={{marginTop:10}}>
+          <button className="btn amber" onClick={()=>setEstado(false)}>Guardar con observaciones</button>
+          <button className="btn" style={{background:"#eee",color:"#555"}} onClick={()=>setModoObs(false)}>Cancelar</button></div></div>}
+    </div>}
     {puedeNotaGer && <div className="card" style={{marginTop:12}}><h3>🏢 Nota de Gerencia</h3>
       <textarea className="inp" value={notaGer} onChange={e=>setNotaGer(e.target.value)}/>
       <button className="btn ocean block" style={{marginTop:10}} onClick={guardarGer}>Guardar nota</button></div>}
@@ -1094,8 +1108,8 @@ function ILDDash({user,regs}){
     const ap=recs.filter(r=>r.estado==='Aprobado').length;
     const ob=recs.filter(r=>r.estado==='Con observaciones').length;
     const pe=recs.filter(r=>r.estado==='Pendiente').length;
-    const dias=diasEsperados(area,year,mes,esMesActual);
-    const diasMes=diasEsperados(area,year,mes,false);
+    const dias=esperadosMes(area,year,mes,esMesActual);
+    const diasMes=esperadosMes(area,year,mes,false);
     const cumpl=dias?Math.round(((ap+ob)/dias)*100):0;
     const aprob=recs.filter(r=>r.fechaAprobacion);
     const horas=aprob.length?(aprob.reduce((s,r)=>s+(new Date(r.fechaAprobacion)-new Date(r.fecha)),0)/aprob.length/3600000):0;
@@ -1416,6 +1430,13 @@ function DiasEsperadosEditor({user,toast,onSave}){
   const [,force]=useState(0); const re=()=>force(x=>x+1);
   const areas=esGD(user)?Object.keys(AC):(user.areas||[]);
   const [fer,setFer]=useState(""); const hoy=new Date();
+  const MESN=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const [cmMes,setCmMes]=useState(hoy.getMonth()===0?11:hoy.getMonth()-1);
+  const [cmAnio,setCmAnio]=useState(hoy.getMonth()===0?hoy.getFullYear()-1:hoy.getFullYear());
+  useEffect(()=>{ if(!esGD(user)) return; const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-1); const py=d.getFullYear(),pm=d.getMonth();
+    if(!mesCerrado(py,pm)){ snapshotMes(py,pm); onSave(); } },[]);
+  const cerrar=()=>{ if(!confirm(`¿Cerrar y congelar las metas de ${MESN[cmMes]} ${cmAnio}? Después ya no se podrán ajustar.`)) return; snapshotMes(cmAnio,cmMes); onSave(); toast("Mes cerrado: "+MESN[cmMes]+" "+cmAnio); re(); };
+  const reabrir=(k)=>{ if(!confirm(`¿Reabrir ${k}? Volverá a calcularse con la frecuencia actual.`)) return; delete METAS[k]; onSave(); toast("Mes reabierto: "+k); re(); };
   const setPatron=(a,p)=>{ DIAS_CFG.areas[a]={...(DIAS_CFG.areas[a]||{}),patron:p}; re(); };
   const setMes=(a,v)=>{ DIAS_CFG.areas[a]={...(DIAS_CFG.areas[a]||{}),patron:'evento',mes:Math.max(0,Number(v)||0)}; re(); };
   const toggleDia=(a,d)=>{ const c=DIAS_CFG.areas[a]||{patron:'personalizado',dias:[]}; const dias=c.dias||[];
@@ -1431,6 +1452,15 @@ function DiasEsperadosEditor({user,toast,onSave}){
       <div className="fgrid" style={{marginTop:10}}>{DIAS_CFG.feriados.map(f=><span key={f} className="pill" style={{background:"#fff3d6",color:"#8a6512"}}>{f}<b style={{cursor:"pointer",marginLeft:4}} onClick={()=>delFer(f)}>✕</b></span>)}</div>
       {!DIAS_CFG.feriados.length && <div className="hint">Sin feriados configurados.</div>}
     </div>
+    {esGD(user) && <div className="card"><h3>🔒 Cierre de metas por mes</h3>
+      <div className="hint">Al cerrar un mes, la cantidad de ILD esperados de ese mes queda <b>congelada</b> y no cambia aunque luego ajustes la frecuencia. El mes anterior se cierra solo al entrar aquí.</div>
+      <div className="row" style={{marginTop:8,gap:6,alignItems:"center",flexWrap:"wrap"}}>
+        <select className="inp" style={{maxWidth:110}} value={cmMes} onChange={e=>setCmMes(Number(e.target.value))}>{MESN.map((m,i)=><option key={i} value={i}>{m}</option>)}</select>
+        <select className="inp" style={{maxWidth:95}} value={cmAnio} onChange={e=>setCmAnio(Number(e.target.value))}>{[hoy.getFullYear()-1,hoy.getFullYear()].map(y=><option key={y} value={y}>{y}</option>)}</select>
+        <button className="btn ocean" onClick={cerrar}>Cerrar mes</button></div>
+      <div className="fgrid" style={{marginTop:10}}>{Object.keys(METAS).sort().map(k=><span key={k} className="pill" style={{background:"#e7f5e6",color:"#1e6b3a"}}>🔒 {k} <b style={{cursor:"pointer",marginLeft:4}} onClick={()=>reabrir(k)}>✕</b></span>)}</div>
+      {!Object.keys(METAS).length && <div className="hint">Aún no hay meses cerrados.</div>}
+    </div>}
     {areas.map(a=>{ const c=DIAS_CFG.areas[a]||{patron:'diario'};
       const dias=diasEsperados(a,hoy.getFullYear(),hoy.getMonth(),false);
       return <div className="card" key={a} style={{padding:12}}>
@@ -1532,9 +1562,11 @@ function ResumenGerencialILD(){
     catch(e){ if(v)setRegs([]); } finally{ if(v)setCargando(false); } })(); return ()=>{v=false;}; },[anio,mes]);
   const regsF = sede==="todas" ? regs : regs.filter(r=>(r.localidad||"")===sede);
   const byArea={};
-  regsF.forEach(r=>{ const a=r.area||"(sin área)"; const g=(byArea[a]=byArea[a]||{label:a,total:0,aprob:0,obs:0,pend:0});
-    g.total++; if(r.estado==="Aprobado")g.aprob++; else if(r.estado==="Con observaciones")g.obs++; else g.pend++; });
-  const arr=Object.values(byArea).map(g=>({...g, cumpl:g.total?Math.round((g.aprob+g.obs)/g.total*100):0}));
+  regsF.forEach(r=>{ const a=r.area||"(sin área)"; const g=(byArea[a]=byArea[a]||{label:a,total:0,aprob:0,obs:0,pend:0,dec:0,sumH:0,apOk:0,ch:0,subOk:0});
+    g.total++; if(r.estado==="Aprobado")g.aprob++; else if(r.estado==="Con observaciones")g.obs++; else g.pend++;
+    if(r.fechaAprobacion&&r.fecha){ g.dec++; const h=(new Date(r.fechaAprobacion)-new Date(r.fecha))/3600000; g.sumH+=h; if(h<=APROB_LIMITE_H)g.apOk++; }
+    if(AC[a]&&AC[a].hora){ g.ch++; if(subidoATiempo(r)===true)g.subOk++; } });
+  const arr=Object.values(byArea).map(g=>({...g, cumpl:g.total?Math.round((g.aprob+g.obs)/g.total*100):0, horasProm:g.dec?g.sumH/g.dec:null, pctApTiempo:g.dec?Math.round(g.apOk/g.dec*100):null, pctSubTiempo:g.ch?Math.round(g.subOk/g.ch*100):null }));
   const tot=regsF.length, tAprob=arr.reduce((s,g)=>s+g.aprob,0), tObs=arr.reduce((s,g)=>s+g.obs,0);
   const tPend=tot-tAprob-tObs;
   const cumplGlobal=tot?Math.round((tAprob+tObs)/tot*100):0;
@@ -1549,21 +1581,17 @@ function ResumenGerencialILD(){
   const horasProm=aprobDecididos.length?(aprobDecididos.reduce((s,r)=>s+(new Date(r.fechaAprobacion)-new Date(r.fecha)),0)/aprobDecididos.length/3600000):null;
   let noReg=null;
   if(mes!=null){ noReg=0; const areasSede=(sede==="todas"?Object.keys(AC):Object.keys(AC).filter(a=>{const L=AC[a].localidad||"";return !L||L===sede;}));
-    areasSede.forEach(a=>{ const esp=diasEsperados(a,anio,mes,esMesActual); const hechos=regsF.filter(r=>r.area===a).length; noReg+=Math.max(0,esp-hechos); }); }
-  const masCumplen=[...arr].sort((a,b)=>b.cumpl-a.cumpl||b.total-a.total).slice(0,10).map(g=>({label:g.label,value:g.cumpl}));
+    areasSede.forEach(a=>{ const esp=esperadosMes(a,anio,mes,esMesActual); const hechos=regsF.filter(r=>r.area===a).length; noReg+=Math.max(0,esp-hechos); }); }
   const masObs=[...arr].filter(g=>g.obs>0).sort((a,b)=>b.obs-a.obs).slice(0,10).map(g=>({label:g.label,value:g.obs}));
-  const masPend=[...arr].filter(g=>g.pend>0).sort((a,b)=>b.pend-a.pend).slice(0,10).map(g=>({label:g.label,value:g.pend}));
-  const obsTipos={};
-  regsF.forEach(r=>{ let items=[]; try{ items=itemsDe(r); }catch(e){ items=[]; }
-    items.forEach((it,i)=>{ let tp=""; try{ tp=itemTipo(it); }catch(e){}
-      if(tp==='sino' && r.checks && r.checks['yn-'+i]==='no'){ let t=itemText(it)||"(ítem)"; obsTipos[t]=(obsTipos[t]||0)+1; } }); });
-  const masTiposObs=Object.entries(obsTipos).map(([label,value])=>({label: label.length>42?label.slice(0,42)+"…":label, value})).sort((a,b)=>b.value-a.value).slice(0,10);
+  const demoraAprob=[...arr].filter(g=>g.dec>0).sort((a,b)=>b.horasProm-a.horasProm).slice(0,10).map(g=>({label:g.label,value:Math.round(g.horasProm*10)/10}));
+  const subenATiempo=[...arr].filter(g=>g.ch>0).sort((a,b)=>b.pctSubTiempo-a.pctSubTiempo).slice(0,10).map(g=>({label:g.label,value:g.pctSubTiempo}));
+  const seTardan=[...arr].filter(g=>g.ch>0 && g.pctSubTiempo<100).sort((a,b)=>a.pctSubTiempo-b.pctSubTiempo).slice(0,10).map(g=>({label:g.label,value:100-g.pctSubTiempo}));
   const estadosData=[{label:"Aprobados",value:tAprob},{label:"Con observaciones",value:tObs},{label:"Pendientes",value:tPend}];
   const tabla=[...arr].sort((a,b)=>b.total-a.total);
   const sedeLbl = sede==="todas" ? "todas las sedes" : sede;
   return <div>
     <h2 style={{margin:"4px 0 2px"}}>Resumen Gerencial · Indicadores Logísticos Diarios</h2>
-    <p className="sub">Cumplimiento y observaciones por área — {sedeLbl}.</p>
+    <p className="sub">Gestión, tiempos y cumplimiento por área — {sedeLbl}.</p>
     <div className="seg" style={{flexWrap:"wrap"}}>
       <button className={sede==="todas"?"on":""} onClick={()=>setSede("todas")}>Todas las sedes</button>
       {LOCALIDADES.map(l=><button key={l} className={sede===l?"on":""} onClick={()=>setSede(l)}>{l}</button>)}
@@ -1587,20 +1615,22 @@ function ResumenGerencialILD(){
       </div>
       <div className="hint" style={{margin:"-2px 0 8px"}}>A tiempo = aprobado dentro de 12 h de subido. En horario = ILD con hora límite subidos antes de esa hora. {mes==null?"(“No registrados” se calcula al elegir un mes.) ":""}Tiempo promedio de aprobación: {horasProm==null?"—":horasProm.toFixed(1)+" h"}.</div>
       <div className="card"><h3>Distribución de estados</h3><BarsH data={estadosData} color="var(--ocean)"/></div>
+      <div className="card"><h3>⏱️ Áreas que más se demoran en aprobar (h prom.)</h3>{demoraAprob.length?<BarsH data={demoraAprob} color="var(--coral)"/>:<div className="hint">Sin aprobaciones registradas en el período.</div>}</div>
+      <div className="card"><h3>✅ Áreas que suben a tiempo (%)</h3>{subenATiempo.length?<BarsH data={subenATiempo} color="var(--green)"/>:<div className="hint">Configura una “hora límite de subida” en las áreas para medir esto.</div>}</div>
+      <div className="card"><h3>🐢 Áreas que más se tardan en subir (% fuera de horario)</h3>{seTardan.length?<BarsH data={seTardan} color="var(--amber)"/>:<div className="hint">Sin subidas fuera de horario (o sin hora límite configurada).</div>}</div>
       <div className="card"><h3>Áreas con más observaciones</h3>{masObs.length?<BarsH data={masObs} color="var(--amber)"/>:<div className="hint">Sin observaciones en el período.</div>}</div>
-      <div className="card"><h3>Tipos de observación más frecuentes</h3>{masTiposObs.length?<BarsH data={masTiposObs} color="var(--coral)"/>:<div className="hint">Sin ítems marcados “No” en el período.</div>}</div>
-      <div className="card"><h3>Áreas que más cumplen (%)</h3>{masCumplen.length?<BarsH data={masCumplen} color="var(--green)"/>:<div className="hint">Sin datos.</div>}</div>
-      <div className="card"><h3>Áreas con más pendientes</h3>{masPend.length?<BarsH data={masPend} color="var(--coral)"/>:<div className="hint">Sin pendientes.</div>}</div>
       <div className="card"><h3>Detalle por área</h3>
         <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
           <thead><tr style={{borderBottom:"2px solid var(--ocean)"}}>
-            {["Área","Total","Aprob.","Obs.","Pend.","Cumpl."].map(h=><th key={h} style={{textAlign:h==="Área"?"left":"center",padding:"6px 4px"}}>{h}</th>)}</tr></thead>
+            {["Área","Total","Aprob.","Obs.","Pend.","Cumpl.","Prom. aprob. (h)","% a tiempo"].map(h=><th key={h} style={{textAlign:h==="Área"?"left":"center",padding:"6px 4px"}}>{h}</th>)}</tr></thead>
           <tbody>{tabla.map(g=><tr key={g.label} style={{borderBottom:"1px solid #f0ece3"}}>
             <td style={{padding:"6px 4px"}}>{g.label}</td>
             <td style={{textAlign:"center"}}>{g.total}</td><td style={{textAlign:"center",fontWeight:700}}>{g.aprob}</td>
             <td style={{textAlign:"center",color:"#b8860b"}}>{g.obs}</td><td style={{textAlign:"center",color:"var(--coral)"}}>{g.pend}</td>
-            <td style={{textAlign:"center",fontWeight:800}}>{g.cumpl}%</td></tr>)}
-            {!tabla.length && <tr><td colSpan={6} className="hint" style={{padding:"14px 0",textAlign:"center"}}>Sin datos en el período</td></tr>}</tbody>
+            <td style={{textAlign:"center",fontWeight:800}}>{g.cumpl}%</td>
+            <td style={{textAlign:"center"}}>{g.horasProm==null?"—":g.horasProm.toFixed(1)}</td>
+            <td style={{textAlign:"center",fontWeight:700,color:g.pctApTiempo==null?"#999":(g.pctApTiempo>=80?"var(--green)":"var(--coral)")}}>{g.pctApTiempo==null?"—":g.pctApTiempo+"%"}</td></tr>)}
+            {!tabla.length && <tr><td colSpan={8} className="hint" style={{padding:"14px 0",textAlign:"center"}}>Sin datos en el período</td></tr>}</tbody>
         </table></div></div>
     </React.Fragment>}
   </div>;
