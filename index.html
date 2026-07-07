@@ -264,7 +264,7 @@ applyGestiona();
 
 /* ===== CONFIG ===== */
 const APP = {
-  version: "WAO HOTELS · ILD's · v2.8 · Firebase",
+  version: "WAO HOTELS · ILD's · v2.9 · Firebase",
   useGraph: true,   // arranca conectado a Google Drive (Client ID ya fijado abajo). Hay botón "Usar modo demo local" si se necesita.
   g: {
     clientId: "734460790404-2pbc3jriungek7dk2d5di6050bc7l2ja.apps.googleusercontent.com",  // Client ID de WAO (no es secreto: va en el frontend)
@@ -313,6 +313,10 @@ const equipoDe = u => { const a=new Set(u.areas||[]); return USERS.filter(x=>x.r
 const TZ="America/Panama";
 const nowISO = () => new Date().toISOString();
 const panamaYMD = d => { try{ return new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(d)); }catch(e){ return String(d||"").slice(0,10); } };
+const APROB_LIMITE_H = 12;
+const horaPanama = d => { try{ return new Intl.DateTimeFormat("en-GB",{timeZone:TZ,hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date(d)); }catch(e){ return ""; } };
+const aprobadoATiempo = r => { if(!r||!r.fechaAprobacion||!r.fecha) return null; return ((new Date(r.fechaAprobacion)-new Date(r.fecha))/3600000) <= APROB_LIMITE_H; };
+const subidoATiempo = r => { const h=(typeof AC!=="undefined"&&AC[r.area]&&AC[r.area].hora)||""; if(!h) return null; const hp=horaPanama(r.fecha); return hp?(hp<=h):null; };
 const fmtDate = s => { if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return s;
   return d.toLocaleDateString("es-EC",{day:"2-digit",month:"short",year:"numeric"}); };
 const fmtDT = s => { if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return s;
@@ -960,6 +964,7 @@ function ILDDetail({user,r,onClose,reload,toast,setFoto}){
   const puedeAprobar=esDevv||esApro||esGer;
   const puedeReAprobar=esApro && r.estado!=='Pendiente';
   const puedeNotaGer=(esGer||esDevv) && r.estado!=='Pendiente';
+  const esAutor = user.nombre===r.usuario;
   const [nota,setNota]=useState(r.notaJef||""); const [notaGer,setNotaGer]=useState(r.notaGerencia||"");
   const [accQue,setAccQue]=useState((r.accion&&r.accion.que)||""); const [accQuien,setAccQuien]=useState((r.accion&&r.accion.quien)||""); const [accCuando,setAccCuando]=useState((r.accion&&r.accion.cuando)||"");
   const [fixFotos,setFixFotos]=useState([]); const corr=r.correccion||null;
@@ -967,21 +972,31 @@ function ILDDetail({user,r,onClose,reload,toast,setFoto}){
     if(!ok && (!accQue.trim()||!accQuien.trim()||!accCuando)){ toast("Para 'Con obs.' indica: qué se corrige, quién y para cuándo"); return; }
     const arr=await Store.read("ILD");
     const base={notaJef:nota,aprobador:user.nombre,fechaAprobacion:nowISO()};
-    const extra= ok ? {estado:"Aprobado"} : {estado:"Con observaciones", accion:{que:accQue.trim(),quien:accQuien.trim(),cuando:accCuando}, correccion:(r.correccion&&r.correccion.estado==='confirmada')?r.correccion:{estado:'pendiente'}};
+    const extra= ok ? {estado:"Aprobado"} : {estado:"Con observaciones", accion:{que:accQue.trim(),quien:accQuien.trim(),cuando:accCuando}, correccion:{estado:'pendiente_foto'}};
     const upd=arr.map(x=>x.id===r.id?{...x,...base,...extra}:x);
     await Store.write("ILD",upd);
     const cod=r.Codigo||("ILD-"+r.id);
-    await addNotif(r.usuario, nota?`${user.nombre} realizó un comentario sobre el ILD No. ${cod}`:`${user.nombre} revisó tu ILD No. ${cod}`, r.id, cod);
-    toast(ok?"ILD aprobado":"Con observaciones"); reload(); onClose();
+    if(ok){ await addNotif(r.usuario, `${user.nombre} aprobó tu ILD No. ${cod}`, r.id, cod); }
+    else { await addNotif(r.usuario, `Tu ILD No. ${cod} tiene observaciones. Sube la corrección con foto.`, r.id, cod); }
+    toast(ok?"ILD aprobado":"Con observaciones — se pidió corrección al colaborador"); reload(); onClose();
   }
-  async function confirmarCorreccion(){
-    if(!fixFotos.length){ toast("Adjunta una foto del arreglo"); return; }
+  async function subirCorreccion(){
+    if(!fixFotos.length){ toast("Adjunta la foto de la corrección"); return; }
     const id=r.id; let subidas=[]; try{ subidas=await subirFotos(fixFotos,`ILDFIX_${id}`,`FIX${id}`); }catch(e){}
     const arr=await Store.read("ILD");
-    const upd=arr.map(x=>x.id===id?{...x, correccion:{...(x.correccion||{}),estado:'confirmada',por:user.nombre,fecha:nowISO(),fotos:subidas}}:x);
+    const upd=arr.map(x=>x.id===id?{...x, correccion:{...(x.correccion||{}),estado:'por_confirmar',fotos:subidas,por:user.nombre,fechaSubida:nowISO()}}:x);
     await Store.write("ILD",upd);
     const cod=r.Codigo||("ILD-"+id);
-    await addNotif(r.usuario, `${user.nombre} confirmó la corrección del ILD No. ${cod}`, id, cod);
+    if(r.aprobador) await addNotif(r.aprobador, `${user.nombre} subió la corrección del ILD No. ${cod}. Confírmala.`, id, cod);
+    toast("Corrección enviada. Pendiente de confirmación del jefe."); reload(); onClose();
+  }
+  async function confirmarCorreccion(){
+    const id=r.id;
+    const arr=await Store.read("ILD");
+    const upd=arr.map(x=>x.id===id?{...x, correccion:{...(x.correccion||{}),estado:'confirmada',confirmadaPor:user.nombre,fechaConfirm:nowISO()}}:x);
+    await Store.write("ILD",upd);
+    const cod=r.Codigo||("ILD-"+id);
+    await addNotif(r.usuario, `${user.nombre} confirmó la corrección del ILD No. ${cod}. ¡Cerrado!`, id, cod);
     toast("Corrección confirmada"); reload(); onClose();
   }
   async function guardarGer(){
@@ -1016,16 +1031,21 @@ function ILDDetail({user,r,onClose,reload,toast,setFoto}){
     {r.notaGerencia && <div className="note ger"><b>🏢 Gerencia</b><div>{r.notaGerencia}</div></div>}
     {r.accion && <div className="note obs"><b>🔧 Acción correctiva</b>
       <div><b>Qué:</b> {r.accion.que}</div><div><b>Quién:</b> {r.accion.quien}</div><div><b>Para cuándo:</b> {r.accion.cuando||"—"}</div>
-      {corr && corr.estado==='confirmada'
-        ? <div style={{marginTop:6,color:"var(--green)",fontWeight:700}}>✅ Corrección confirmada por {corr.por} · {fmtDT(corr.fecha)}</div>
-        : <div style={{marginTop:6,color:"#b06a4a",fontWeight:700}}>⏳ Corrección pendiente de confirmar</div>}
-      {corr && corr.estado==='confirmada' && (corr.fotos||[]).length>0 && <div className="fgrid" style={{marginTop:6}}>{corr.fotos.map((f,i)=><SpImg key={i} foto={f} idx={i+1} onClick={setFoto}/>)}</div>}
+      {corr && corr.estado==='confirmada' && <div style={{marginTop:6,color:"var(--green)",fontWeight:700}}>✅ Corrección confirmada por {corr.confirmadaPor} · {fmtDT(corr.fechaConfirm)}</div>}
+      {corr && corr.estado==='por_confirmar' && <div style={{marginTop:6,color:"#b06a4a",fontWeight:700}}>📤 Corrección subida por {corr.por} · pendiente de confirmación del jefe</div>}
+      {corr && corr.estado==='pendiente_foto' && <div style={{marginTop:6,color:"#b06a4a",fontWeight:700}}>⏳ Pendiente: el colaborador debe subir la corrección con foto</div>}
+      {corr && (corr.fotos||[]).length>0 && <div style={{marginTop:6}}><div className="hint">Foto(s) de la corrección:</div><div className="fgrid">{corr.fotos.map((f,i)=><SpImg key={i} foto={f} idx={i+1} onClick={setFoto}/>)}</div></div>}
     </div>}
-    {puedeAprobar && corr && corr.estado==='pendiente' && <div className="card" style={{marginTop:12}}>
-      <h3>🔧 Confirmar corrección</h3>
-      <div className="hint">Adjunta una foto del arreglo para cerrar la observación.</div>
+    {(esAutor||esDevv) && corr && corr.estado==='pendiente_foto' && <div className="card" style={{marginTop:12}}>
+      <h3>🔧 Subir corrección</h3>
+      <div className="hint">Tu ILD tiene observaciones. Sube la foto del arreglo para enviarla a tu jefatura.</div>
       <PhotoField fotos={fixFotos} setFotos={setFixFotos} setFoto={setFoto}/>
-      <button className="btn green block" style={{marginTop:10}} onClick={confirmarCorreccion}>✅ Confirmar corrección con foto</button>
+      <button className="btn green block" style={{marginTop:10}} onClick={subirCorreccion}>📤 Enviar corrección con foto</button>
+    </div>}
+    {puedeAprobar && corr && corr.estado==='por_confirmar' && <div className="card" style={{marginTop:12}}>
+      <h3>✅ Confirmar corrección</h3>
+      <div className="hint">El colaborador subió la corrección. Revisa la foto de arriba y confírmala para cerrar la observación.</div>
+      <button className="btn green block" style={{marginTop:10}} onClick={confirmarCorreccion}>✅ Confirmar corrección</button>
     </div>}
 
     {puedeAprobar && r.estado==='Pendiente' && <div className="card" style={{marginTop:12}}>
@@ -1092,6 +1112,8 @@ function ILDDash({user,regs}){
   const tot=allRows.reduce((s,r)=>s+r.subidos,0), tAp=allRows.reduce((s,r)=>s+r.ap,0),
         tOb=allRows.reduce((s,r)=>s+r.ob,0), tPe=allRows.reduce((s,r)=>s+r.pe,0),
         tDias=allRows.reduce((s,r)=>s+r.dias,0), tNoReg=allRows.reduce((s,r)=>s+r.noReg,0), cumGlobal=tDias?Math.round(((tAp+tOb)/tDias)*100):0;
+  const decid=regs.filter(r=>r.fechaAprobacion && new Date(r.fecha).getFullYear()===year && new Date(r.fecha).getMonth()===mes && areasUser.includes(r.area) && (grp==="todas"||AC[r.area]?.g===grp));
+  const atOK=decid.filter(r=>aprobadoATiempo(r)===true).length; const pctAt=decid.length?Math.round(atOK/decid.length*100):null;
   function exportar(){ const rows=allRows.map(r=>({Grupo:AC[r.area]?.g,Area:r.area,Turno:r.turno,
     DiasEsperados:r.dias,DiasMes:r.diasMes,Subidos:r.subidos,Aprobados:r.ap,ConObs:r.ob,NoRegistrados:r.noReg,Pendientes:r.pe,
     Cumplimiento:r.dias?r.cumpl+"%":"Por evento",TiempoPromHoras:r.horas.toFixed(2)}));
@@ -1107,7 +1129,7 @@ function ILDDash({user,regs}){
       <button className="btn green" style={{padding:"8px 14px"}} onClick={exportar}>⬇ Excel</button></div>
     <div className="kpis">
       {[["Total",tot,"--blue"],["Aprobados",tAp,"--green"],["Con obs.",tOb,"--purple"],
-        ["No registrados",tNoReg,"--coral"],["Pendientes",tPe,"--amber"],["% Cumplimiento",tDias?cumGlobal+"%":"—",colorCumpl(cumGlobal)]].map(([l,v,c])=>
+        ["No registrados",tNoReg,"--coral"],["Pendientes",tPe,"--amber"],["% Cumplimiento",tDias?cumGlobal+"%":"—",colorCumpl(cumGlobal)],["% a tiempo",pctAt==null?"—":pctAt+"%",colorCumpl(pctAt||0)]].map(([l,v,c])=>
         <div className="kpi" key={l} style={{borderTop:"3px solid "+cssVar(c)}}>
           <div className="kn" style={{color:cssVar(c)}}>{v}</div><div className="kl">{l}</div></div>)}
     </div>
@@ -1247,7 +1269,7 @@ function ILDEditorModal({e,onClose,onSaved,toast}){
   const [gNuevo,setGNuevo]=useState(""); const [localidad,setLocalidad]=useState(e.localidad);
   const [aprobador,setAprobador]=useState(e.aprobador); const [fotos,setFotos]=useState(e.fotos);
   const [modo,setModo]=useState(e.modo); const [items,setItems]=useState(e.items);
-  const [resp,setResp]=useState(e.resp||""); const [supl,setSupl]=useState(e.supl||""); const [std,setStd]=useState(e.std||"");
+  const [resp,setResp]=useState(e.resp||""); const [supl,setSupl]=useState(e.supl||""); const [std,setStd]=useState(e.std||""); const [hora,setHora]=useState(e.hora||"");
   const roles=rolesAprobadores();
   const colabs=[...new Set(USERS.filter(u=>u.rol==='colaborador').map(u=>u.nombre))];
   const TIPOS=[["foto","📷 Foto"],["sino","✅ Sí / No / N/A"],["texto","📝 Texto"],["apertura_cierre","🔁 Apertura/Cierre"],["comida","🍽️ Desayuno/Almuerzo/Cena"]];
@@ -1264,7 +1286,7 @@ function ILDEditorModal({e,onClose,onSaved,toast}){
     const clean=items.filter(it=>String(it.t).trim()).map(it=>({t:it.t.trim(),tipo:it.tipo}));
     if(!e._new && n!==orig){ delete AC[orig]; delete APR[orig]; delete CL[orig]; delete AMODO[orig];
       USERS.forEach(u=>{ if(u.areas) u.areas=u.areas.map(x=>x===orig?n:x); }); }
-    AC[n]={r:Number(fotos)||0,g:g||"",localidad:localidad||"",resp:resp||"",supl:supl||"",std:std||""};
+    AC[n]={r:Number(fotos)||0,g:g||"",localidad:localidad||"",resp:resp||"",supl:supl||"",std:std||"",hora:hora||""};
     APR[n]=aprobador||""; CL[n]=clean; AMODO[n]=modo;
     onSaved(); toast("ILD guardado: "+n);
     if(!e._new && n!==orig){ try{ const all=await Store.read("ILD"); let c=0; const u=all.map(r=>{if(r.area===orig){c++;return{...r,area:n};}return r;}); if(c) await Store.write("ILD",u);}catch(x){} }
@@ -1279,6 +1301,7 @@ function ILDEditorModal({e,onClose,onSaved,toast}){
     <div className="row"><div style={{flex:1}}><Field label="Responsable" hint={colabs.length?"":"Crea colaboradores en Usuarios."}><select className="inp" value={resp} onChange={e2=>setResp(e2.target.value)}><option value="">—</option>{colabs.map(c=><option key={c}>{c}</option>)}</select></Field></div>
       <div style={{flex:1}}><Field label="Suplente"><select className="inp" value={supl} onChange={e2=>setSupl(e2.target.value)}><option value="">—</option>{colabs.map(c=><option key={c}>{c}</option>)}</select></Field></div></div>
     <Field label="Estándar / product book (enlace)" hint="Opcional. Pega el enlace al estándar para medir con el mismo criterio."><input className="inp" value={std} onChange={e2=>setStd(e2.target.value)} placeholder="https://…"/></Field>
+    <Field label="Hora límite de subida (opcional)" hint="Para ILD de una vez al día. Si se sube después de esta hora, se marca fuera de horario."><input className="inp" type="time" value={hora} onChange={e2=>setHora(e2.target.value)}/></Field>
     <Field label="Modo"><select className="inp" value={modo} onChange={e2=>setModo(e2.target.value)}><option value="normal">Checklist normal</option><option value="lista">Lista (elegir una opción + 3 a 5 fotos)</option></select></Field>
     {modo==='normal' && <div className="hint" style={{marginBottom:10}}>Fotos requeridas = {nFotos} (cada ítem tipo 📷 Foto suma una).</div>}
     <div style={{fontWeight:700,margin:"8px 0 6px",fontFamily:"'Barlow Condensed',sans-serif"}}>Checklist — {items.length} {modo==='lista'?"opciones":"ítems"}</div>
@@ -1300,9 +1323,9 @@ function ILDEditorModal({e,onClose,onSaved,toast}){
 }
 function ILDBuilder({user,toast,onSave}){
   const [,force]=useState(0); const re=()=>force(x=>x+1); const [edit,setEdit]=useState(null);
-  function nuevo(){ setEdit({_new:true,nombre:"",grupo:(GRUPOS[0]||""),localidad:(LOCALIDADES[0]||""),aprobador:"",fotos:0,modo:"normal",items:[],resp:"",supl:"",std:""}); }
+  function nuevo(){ setEdit({_new:true,nombre:"",grupo:(GRUPOS[0]||""),localidad:(LOCALIDADES[0]||""),aprobador:"",fotos:0,modo:"normal",items:[],resp:"",supl:"",std:"",hora:""}); }
   function abrir(a){ const norm=it=>(typeof it==='object'&&it)?{t:it.t,tipo:it.tipo||'foto'}:{t:it,tipo:'foto'};
-    setEdit({_new:false,orig:a,nombre:a,grupo:AC[a].g||"",localidad:AC[a].localidad||"",aprobador:APR[a]||"",fotos:AC[a].r||0,modo:areaModo(a),items:(CL[a]||[]).map(norm),resp:AC[a].resp||"",supl:AC[a].supl||"",std:AC[a].std||""}); }
+    setEdit({_new:false,orig:a,nombre:a,grupo:AC[a].g||"",localidad:AC[a].localidad||"",aprobador:APR[a]||"",fotos:AC[a].r||0,modo:areaModo(a),items:(CL[a]||[]).map(norm),resp:AC[a].resp||"",supl:AC[a].supl||"",std:AC[a].std||"",hora:AC[a].hora||""}); }
   function borrar(a){ if(!confirm("¿Eliminar el ILD \""+a+"\"? Los registros históricos NO se borran."))return;
     delete AC[a];delete APR[a];delete CL[a];delete AMODO[a]; USERS.forEach(u=>{if(u.areas)u.areas=u.areas.filter(x=>x!==a);}); onSave(); re(); toast("ILD eliminado: "+a); }
   const ilds=Object.keys(AC); const porLoc={};
@@ -1361,7 +1384,7 @@ function ILDConfig({user,toast,onSave}){
       <button className={sec==="usuarios"?"on":""} onClick={()=>setSec("usuarios")}>Usuarios</button>
       <button className={sec==="dias"?"on":""} onClick={()=>setSec("dias")}>Frecuencia</button>
     </div>
-    {sec==="ilds" && <React.Fragment><PresetExperiencia toast={toast} onSave={onSave}/><ILDBuilder user={user} toast={toast} onSave={onSave}/></React.Fragment>}
+    {sec==="ilds" && <ILDBuilder user={user} toast={toast} onSave={onSave}/>}
     {sec==="grupos" && <GruposEditor toast={toast} onSave={onSave}/>}
     {sec==="local" && <LocalidadesEditor toast={toast} onSave={onSave}/>}
     {sec==="usuarios" && <UserAdmin toast={toast}/>}
@@ -1515,6 +1538,18 @@ function ResumenGerencialILD(){
   const tot=regsF.length, tAprob=arr.reduce((s,g)=>s+g.aprob,0), tObs=arr.reduce((s,g)=>s+g.obs,0);
   const tPend=tot-tAprob-tObs;
   const cumplGlobal=tot?Math.round((tAprob+tObs)/tot*100):0;
+  const esMesActual=(mes===now.getMonth() && anio===now.getFullYear());
+  const aprobDecididos=regsF.filter(r=>r.fechaAprobacion);
+  const aprobTiempoOK=aprobDecididos.filter(r=>aprobadoATiempo(r)===true).length;
+  const pctAprobTiempo=aprobDecididos.length?Math.round(aprobTiempoOK/aprobDecididos.length*100):null;
+  const conHora=regsF.filter(r=>AC[r.area]&&AC[r.area].hora);
+  const subTiempoOK=conHora.filter(r=>subidoATiempo(r)===true).length;
+  const pctSubTiempo=conHora.length?Math.round(subTiempoOK/conHora.length*100):null;
+  const correccPend=regsF.filter(r=>r.correccion&&r.correccion.estado&&r.correccion.estado!=='confirmada').length;
+  const horasProm=aprobDecididos.length?(aprobDecididos.reduce((s,r)=>s+(new Date(r.fechaAprobacion)-new Date(r.fecha)),0)/aprobDecididos.length/3600000):null;
+  let noReg=null;
+  if(mes!=null){ noReg=0; const areasSede=(sede==="todas"?Object.keys(AC):Object.keys(AC).filter(a=>{const L=AC[a].localidad||"";return !L||L===sede;}));
+    areasSede.forEach(a=>{ const esp=diasEsperados(a,anio,mes,esMesActual); const hechos=regsF.filter(r=>r.area===a).length; noReg+=Math.max(0,esp-hechos); }); }
   const masCumplen=[...arr].sort((a,b)=>b.cumpl-a.cumpl||b.total-a.total).slice(0,10).map(g=>({label:g.label,value:g.cumpl}));
   const masObs=[...arr].filter(g=>g.obs>0).sort((a,b)=>b.obs-a.obs).slice(0,10).map(g=>({label:g.label,value:g.obs}));
   const masPend=[...arr].filter(g=>g.pend>0).sort((a,b)=>b.pend-a.pend).slice(0,10).map(g=>({label:g.label,value:g.pend}));
@@ -1543,6 +1578,14 @@ function ResumenGerencialILD(){
         <KpiBox label="Con observaciones" value={tObs} color={cssVar("--amber")}/>
         <KpiBox label="% Cumplimiento" value={cumplGlobal+"%"} color={cumplGlobal>=80?cssVar("--green"):cssVar("--coral")}/>
       </div>
+      <div style={{fontWeight:700,margin:"10px 0 4px",fontFamily:"'Barlow Condensed',sans-serif",fontSize:16,color:"var(--ink)"}}>📊 Gestión</div>
+      <div className="kpis">
+        <KpiBox label="% Aprobado a tiempo (≤12h)" value={pctAprobTiempo==null?"—":pctAprobTiempo+"%"} color={pctAprobTiempo==null?cssVar("--muted"):(pctAprobTiempo>=80?cssVar("--green"):cssVar("--coral"))}/>
+        <KpiBox label="% Subido en horario" value={pctSubTiempo==null?"—":pctSubTiempo+"%"} color={pctSubTiempo==null?cssVar("--muted"):(pctSubTiempo>=80?cssVar("--green"):cssVar("--coral"))}/>
+        <KpiBox label="No registrados" value={noReg==null?"—":noReg} color={noReg?cssVar("--coral"):cssVar("--green")}/>
+        <KpiBox label="Correcciones pendientes" value={correccPend} color={correccPend?cssVar("--amber"):cssVar("--green")}/>
+      </div>
+      <div className="hint" style={{margin:"-2px 0 8px"}}>A tiempo = aprobado dentro de 12 h de subido. En horario = ILD con hora límite subidos antes de esa hora. {mes==null?"(“No registrados” se calcula al elegir un mes.) ":""}Tiempo promedio de aprobación: {horasProm==null?"—":horasProm.toFixed(1)+" h"}.</div>
       <div className="card"><h3>Distribución de estados</h3><BarsH data={estadosData} color="var(--ocean)"/></div>
       <div className="card"><h3>Áreas con más observaciones</h3>{masObs.length?<BarsH data={masObs} color="var(--amber)"/>:<div className="hint">Sin observaciones en el período.</div>}</div>
       <div className="card"><h3>Tipos de observación más frecuentes</h3>{masTiposObs.length?<BarsH data={masTiposObs} color="var(--coral)"/>:<div className="hint">Sin ítems marcados “No” en el período.</div>}</div>
