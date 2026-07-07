@@ -264,7 +264,7 @@ applyGestiona();
 
 /* ===== CONFIG ===== */
 const APP = {
-  version: "WAO HOTELS · ILD's · v3.0 · Firebase",
+  version: "WAO HOTELS · ILD's · v3.1 · Firebase",
   useGraph: true,   // arranca conectado a Google Drive (Client ID ya fijado abajo). Hay botón "Usar modo demo local" si se necesita.
   g: {
     clientId: "734460790404-2pbc3jriungek7dk2d5di6050bc7l2ja.apps.googleusercontent.com",  // Client ID de WAO (no es secreto: va en el frontend)
@@ -644,7 +644,7 @@ function Login({onLogin,onLoginColab,busy,err}){
           <option value="">{colabs===null?"Cargando…":"Selecciona tu nombre…"}</option>
           {(colabs||[]).map(c=><option key={c.slug} value={c.nombre}>{c.nombre}</option>)}
         </select>
-        <input className="inp" style={{marginTop:8}} type="password" inputMode="numeric" placeholder="Tu código" value={code} onChange={e=>setCode(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")entrar();}}/>
+        <input className="inp" style={{marginTop:8}} type="password" inputMode="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Tu código" value={code} onChange={e=>setCode(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")entrar();}}/>
       </React.Fragment>}
       <div className="lerr">{le||err||""}</div>
       <button className="btn primary block" style={{marginTop:10}} disabled={busy} onClick={entrar}>{busy?"Entrando…":"Ingresar"}</button>
