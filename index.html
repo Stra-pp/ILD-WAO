@@ -264,7 +264,7 @@ applyGestiona();
 
 /* ===== CONFIG ===== */
 const APP = {
-  version: "WAO HOTELS · ILD's · v2.6 · Firebase",
+  version: "WAO HOTELS · ILD's · v2.8 · Firebase",
   useGraph: true,   // arranca conectado a Google Drive (Client ID ya fijado abajo). Hay botón "Usar modo demo local" si se necesita.
   g: {
     clientId: "734460790404-2pbc3jriungek7dk2d5di6050bc7l2ja.apps.googleusercontent.com",  // Client ID de WAO (no es secreto: va en el frontend)
@@ -517,7 +517,7 @@ const DIAS_CFG = { feriados:[], areas:{} };  // areas[area] = {patron:'diario'|'
 function patronDias(p){ return p==='finde'?[0,6]:p==='vsd'?[0,5,6]:p==='diario'?[0,1,2,3,4,5,6]:null; }
 function diasEsperados(area,year,month,hastaHoy){
   const cfg=DIAS_CFG.areas[area]||{patron:'diario'};
-  if(cfg.patron==='evento') return 0;
+  if(cfg.patron==='evento') return Number(cfg.mes)||0;
   if(cfg.patron==='mensual') return 1;
   let set = cfg.patron==='personalizado' ? (cfg.dias||[]) : patronDias(cfg.patron);
   if(!set) set=[0,1,2,3,4,5,6];
@@ -621,7 +621,7 @@ function Login({onLogin,onLoginColab,busy,err}){
   return <div className="login"><div className="sun"></div><div className="wave"></div>
     <div className="lcard">
       <div className="loginlogo"><img src={LOGO_B} alt="WAO HOTELS - ILD's"/></div>
-      <div className="ltag">Índices Logísticos Diarios · WAO Hotels</div>
+      <div className="ltag">Indicadores Logísticos Diarios · WAO Hotels</div>
       <div className="seg" style={{marginTop:10}}>
         <button className={modo==="correo"?"on":""} onClick={()=>{setModo("correo");setLe("");}}>Correo</button>
         <button className={modo==="colab"?"on":""} onClick={()=>{setModo("colab");setLe("");}}>Colaborador</button>
@@ -646,7 +646,7 @@ function Login({onLogin,onLoginColab,busy,err}){
 /* ===== HOME ===== */
 function Home({user,go,counts}){
   const tiles=[];
-  if(puede(user,'ild')) tiles.push({id:"ild",t:"ILD",d:"Índices logísticos diarios",ico:"📋",col:"--ocean"});
+  if(puede(user,'ild')) tiles.push({id:"ild",t:"ILD",d:"Indicadores logísticos diarios",ico:"📋",col:"--ocean"});
   if(esDev(user)) tiles.push({id:"admin",t:"Configuración",d:"Usuarios y conexión",ico:"⚙️",col:"--muted"});
   return <div>
     <h1 className="h1">Hola, {user.nombre.split(" ")[0]} 👋</h1>
@@ -675,8 +675,8 @@ function ILD({user,toast,setFoto,bump}){
   useEffect(()=>{load();},[]);
   const guardarCfg=()=>{ cfgSave(); bump&&bump(); };
   return <div>
-    <h1 className="h1">ILD · Índices Logísticos Diarios</h1>
-    <p className="sub">Índices logísticos por área y turno.</p>
+    <h1 className="h1">ILD · Indicadores Logísticos Diarios</h1>
+    <p className="sub">Indicadores logísticos por área y turno.</p>
     {(showNuevo||puedeRevisar||showChecklist||esDevv) && <div className="seg">
       {showNuevo && <button className={tab==="nuevo"?"on":""} onClick={()=>setTab("nuevo")}>Nuevo</button>}
       {showNuevo && <button className={tab==="mios"?"on":""} onClick={()=>{setTab("mios");load();}}>Mis ILD</button>}
@@ -961,13 +961,28 @@ function ILDDetail({user,r,onClose,reload,toast,setFoto}){
   const puedeReAprobar=esApro && r.estado!=='Pendiente';
   const puedeNotaGer=(esGer||esDevv) && r.estado!=='Pendiente';
   const [nota,setNota]=useState(r.notaJef||""); const [notaGer,setNotaGer]=useState(r.notaGerencia||"");
+  const [accQue,setAccQue]=useState((r.accion&&r.accion.que)||""); const [accQuien,setAccQuien]=useState((r.accion&&r.accion.quien)||""); const [accCuando,setAccCuando]=useState((r.accion&&r.accion.cuando)||"");
+  const [fixFotos,setFixFotos]=useState([]); const corr=r.correccion||null;
   async function setEstado(ok){
+    if(!ok && (!accQue.trim()||!accQuien.trim()||!accCuando)){ toast("Para 'Con obs.' indica: qué se corrige, quién y para cuándo"); return; }
     const arr=await Store.read("ILD");
-    const upd=arr.map(x=>x.id===r.id?{...x,estado:ok?"Aprobado":"Con observaciones",notaJef:nota,aprobador:user.nombre,fechaAprobacion:nowISO()}:x);
+    const base={notaJef:nota,aprobador:user.nombre,fechaAprobacion:nowISO()};
+    const extra= ok ? {estado:"Aprobado"} : {estado:"Con observaciones", accion:{que:accQue.trim(),quien:accQuien.trim(),cuando:accCuando}, correccion:(r.correccion&&r.correccion.estado==='confirmada')?r.correccion:{estado:'pendiente'}};
+    const upd=arr.map(x=>x.id===r.id?{...x,...base,...extra}:x);
     await Store.write("ILD",upd);
     const cod=r.Codigo||("ILD-"+r.id);
     await addNotif(r.usuario, nota?`${user.nombre} realizó un comentario sobre el ILD No. ${cod}`:`${user.nombre} revisó tu ILD No. ${cod}`, r.id, cod);
     toast(ok?"ILD aprobado":"Con observaciones"); reload(); onClose();
+  }
+  async function confirmarCorreccion(){
+    if(!fixFotos.length){ toast("Adjunta una foto del arreglo"); return; }
+    const id=r.id; let subidas=[]; try{ subidas=await subirFotos(fixFotos,`ILDFIX_${id}`,`FIX${id}`); }catch(e){}
+    const arr=await Store.read("ILD");
+    const upd=arr.map(x=>x.id===id?{...x, correccion:{...(x.correccion||{}),estado:'confirmada',por:user.nombre,fecha:nowISO(),fotos:subidas}}:x);
+    await Store.write("ILD",upd);
+    const cod=r.Codigo||("ILD-"+id);
+    await addNotif(r.usuario, `${user.nombre} confirmó la corrección del ILD No. ${cod}`, id, cod);
+    toast("Corrección confirmada"); reload(); onClose();
   }
   async function guardarGer(){
     const arr=await Store.read("ILD");
@@ -999,15 +1014,40 @@ function ILDDetail({user,r,onClose,reload,toast,setFoto}){
     {r.obs && <div className="note obs"><b>📝 Nota del colaborador</b><div>{r.obs}</div></div>}
     {r.notaJef && <div className="note jef"><b>💬 {r.aprobador} · {fmtDT(r.fechaAprobacion)}</b><div>{r.notaJef}</div></div>}
     {r.notaGerencia && <div className="note ger"><b>🏢 Gerencia</b><div>{r.notaGerencia}</div></div>}
+    {r.accion && <div className="note obs"><b>🔧 Acción correctiva</b>
+      <div><b>Qué:</b> {r.accion.que}</div><div><b>Quién:</b> {r.accion.quien}</div><div><b>Para cuándo:</b> {r.accion.cuando||"—"}</div>
+      {corr && corr.estado==='confirmada'
+        ? <div style={{marginTop:6,color:"var(--green)",fontWeight:700}}>✅ Corrección confirmada por {corr.por} · {fmtDT(corr.fecha)}</div>
+        : <div style={{marginTop:6,color:"#b06a4a",fontWeight:700}}>⏳ Corrección pendiente de confirmar</div>}
+      {corr && corr.estado==='confirmada' && (corr.fotos||[]).length>0 && <div className="fgrid" style={{marginTop:6}}>{corr.fotos.map((f,i)=><SpImg key={i} foto={f} idx={i+1} onClick={setFoto}/>)}</div>}
+    </div>}
+    {puedeAprobar && corr && corr.estado==='pendiente' && <div className="card" style={{marginTop:12}}>
+      <h3>🔧 Confirmar corrección</h3>
+      <div className="hint">Adjunta una foto del arreglo para cerrar la observación.</div>
+      <PhotoField fotos={fixFotos} setFotos={setFixFotos} setFoto={setFoto}/>
+      <button className="btn green block" style={{marginTop:10}} onClick={confirmarCorreccion}>✅ Confirmar corrección con foto</button>
+    </div>}
 
     {puedeAprobar && r.estado==='Pendiente' && <div className="card" style={{marginTop:12}}>
       <h3>👔 Aprobación</h3>
       <textarea className="inp" placeholder="Observación (opcional)…" value={nota} onChange={e=>setNota(e.target.value)}/>
+      <div className="hint" style={{marginTop:8,marginBottom:4}}>Si marcas <b>Con obs.</b>, indica la acción correctiva:</div>
+      <input className="inp" placeholder="¿Qué se va a corregir?" value={accQue} onChange={e=>setAccQue(e.target.value)}/>
+      <div className="row" style={{marginTop:6}}>
+        <input className="inp" style={{flex:1}} placeholder="¿Quién?" value={accQuien} onChange={e=>setAccQuien(e.target.value)}/>
+        <input className="inp" style={{flex:1}} type="date" value={accCuando} onChange={e=>setAccCuando(e.target.value)}/>
+      </div>
       <div className="row" style={{marginTop:10}}>
         <button className="btn green" onClick={()=>setEstado(true)}>✅ Aprobar</button>
         <button className="btn amber" onClick={()=>setEstado(false)}>📝 Con obs.</button></div></div>}
     {puedeReAprobar && <div className="card" style={{marginTop:12}}><h3>🔄 Modificar evaluación</h3>
       <textarea className="inp" value={nota} onChange={e=>setNota(e.target.value)}/>
+      <div className="hint" style={{marginTop:8,marginBottom:4}}>Si marcas <b>Con obs.</b>, indica la acción correctiva:</div>
+      <input className="inp" placeholder="¿Qué se va a corregir?" value={accQue} onChange={e=>setAccQue(e.target.value)}/>
+      <div className="row" style={{marginTop:6}}>
+        <input className="inp" style={{flex:1}} placeholder="¿Quién?" value={accQuien} onChange={e=>setAccQuien(e.target.value)}/>
+        <input className="inp" style={{flex:1}} type="date" value={accCuando} onChange={e=>setAccCuando(e.target.value)}/>
+      </div>
       <div className="row" style={{marginTop:10}}>
         <button className="btn green" onClick={()=>setEstado(true)}>Cambiar a Aprobado</button>
         <button className="btn amber" onClick={()=>setEstado(false)}>Cambiar a Con obs.</button></div></div>}
@@ -1039,7 +1079,8 @@ function ILDDash({user,regs}){
     const cumpl=dias?Math.round(((ap+ob)/dias)*100):0;
     const aprob=recs.filter(r=>r.fechaAprobacion);
     const horas=aprob.length?(aprob.reduce((s,r)=>s+(new Date(r.fechaAprobacion)-new Date(r.fecha)),0)/aprob.length/3600000):0;
-    return {area,turno,subidos:recs.length,ap,ob,pe,dias,diasMes,cumpl,horas};
+    const noReg=Math.max(0,dias-recs.length); const reinc=(noReg+ob)>=3;
+    return {area,turno,subidos:recs.length,ap,ob,pe,dias,diasMes,cumpl,horas,noReg,reinc};
   }
   const gruposVis=(grp==="todas"?grupos:[grp]);
   const tablas=gruposVis.map(g=>{ const areasG=areasUser.filter(a=>AC[a]?.g===g);
@@ -1050,9 +1091,9 @@ function ILDDash({user,regs}){
   const allRows=tablas.flatMap(t=>t.rows);
   const tot=allRows.reduce((s,r)=>s+r.subidos,0), tAp=allRows.reduce((s,r)=>s+r.ap,0),
         tOb=allRows.reduce((s,r)=>s+r.ob,0), tPe=allRows.reduce((s,r)=>s+r.pe,0),
-        tDias=allRows.reduce((s,r)=>s+r.dias,0), cumGlobal=tDias?Math.round(((tAp+tOb)/tDias)*100):0;
+        tDias=allRows.reduce((s,r)=>s+r.dias,0), tNoReg=allRows.reduce((s,r)=>s+r.noReg,0), cumGlobal=tDias?Math.round(((tAp+tOb)/tDias)*100):0;
   function exportar(){ const rows=allRows.map(r=>({Grupo:AC[r.area]?.g,Area:r.area,Turno:r.turno,
-    DiasEsperados:r.dias,DiasMes:r.diasMes,Subidos:r.subidos,Aprobados:r.ap,ConObs:r.ob,Pendientes:r.pe,
+    DiasEsperados:r.dias,DiasMes:r.diasMes,Subidos:r.subidos,Aprobados:r.ap,ConObs:r.ob,NoRegistrados:r.noReg,Pendientes:r.pe,
     Cumplimiento:r.dias?r.cumpl+"%":"Por evento",TiempoPromHoras:r.horas.toFixed(2)}));
     exportXLSX(rows,"Dashboard",`Dashboard_ILD_${meses[mes]}_${year}`); }
   return <div>
@@ -1066,7 +1107,7 @@ function ILDDash({user,regs}){
       <button className="btn green" style={{padding:"8px 14px"}} onClick={exportar}>⬇ Excel</button></div>
     <div className="kpis">
       {[["Total",tot,"--blue"],["Aprobados",tAp,"--green"],["Con obs.",tOb,"--purple"],
-        ["Pendientes",tPe,"--amber"],["% Cumplimiento",tDias?cumGlobal+"%":"—",colorCumpl(cumGlobal)]].map(([l,v,c])=>
+        ["No registrados",tNoReg,"--coral"],["Pendientes",tPe,"--amber"],["% Cumplimiento",tDias?cumGlobal+"%":"—",colorCumpl(cumGlobal)]].map(([l,v,c])=>
         <div className="kpi" key={l} style={{borderTop:"3px solid "+cssVar(c)}}>
           <div className="kn" style={{color:cssVar(c)}}>{v}</div><div className="kl">{l}</div></div>)}
     </div>
@@ -1075,13 +1116,14 @@ function ILDDash({user,regs}){
     {tablas.map(({g,rows})=><div className="dgrp" key={g}>
       <div className="ghead">📁 {g.toUpperCase()}</div>
       <div className="dscroll"><table className="dtable">
-        <thead><tr><th>Turno</th><th>Días</th><th>Subidos</th><th>Aprob.</th><th>Obs.</th><th>Cumpl.</th><th>Tiempo (h)</th></tr></thead>
+        <thead><tr><th>Turno</th><th>Días</th><th>Subidos</th><th>Aprob.</th><th>Obs.</th><th>No reg.</th><th>Cumpl.</th><th>Tiempo (h)</th></tr></thead>
         <tbody>{rows.map((r,i)=><tr key={i}>
-          <td>{r.turno}<div className="ddias">{r.area}</div></td>
+          <td>{r.turno}<div className="ddias">{r.area}{r.reinc?<span title="Reincidente (3+ este mes)" style={{color:"#c0392b",fontWeight:700}}> ⚠️ reincidente</span>:""}</div></td>
           <td><span className="dnum">{r.dias}</span><div className="ddias">/{r.diasMes} mes</div></td>
           <td><span className="dnum">{r.subidos}</span></td>
           <td><span className="dnum g">{r.ap}</span></td>
           <td>{r.ob?<span className="dnum p">{r.ob}</span>:<span style={{color:"#ccc"}}>–</span>}</td>
+          <td>{r.noReg?<span className="dnum" style={{color:"#c0392b"}}>{r.noReg}</span>:<span style={{color:"#ccc"}}>–</span>}</td>
           <td>{r.dias?<span className="dcirc" style={{borderColor:cssVar(colorCumpl(r.cumpl)),color:cssVar(colorCumpl(r.cumpl))}}>{r.cumpl}%</span>:<span className="ddias">por evento</span>}</td>
           <td>{r.horas?r.horas.toFixed(2):"0.00"}</td></tr>)}</tbody>
       </table></div>
@@ -1352,12 +1394,13 @@ function DiasEsperadosEditor({user,toast,onSave}){
   const areas=esGD(user)?Object.keys(AC):(user.areas||[]);
   const [fer,setFer]=useState(""); const hoy=new Date();
   const setPatron=(a,p)=>{ DIAS_CFG.areas[a]={...(DIAS_CFG.areas[a]||{}),patron:p}; re(); };
+  const setMes=(a,v)=>{ DIAS_CFG.areas[a]={...(DIAS_CFG.areas[a]||{}),patron:'evento',mes:Math.max(0,Number(v)||0)}; re(); };
   const toggleDia=(a,d)=>{ const c=DIAS_CFG.areas[a]||{patron:'personalizado',dias:[]}; const dias=c.dias||[];
     DIAS_CFG.areas[a]={patron:'personalizado',dias:dias.includes(d)?dias.filter(x=>x!==d):[...dias,d]}; re(); };
   const addFer=()=>{ if(fer && !DIAS_CFG.feriados.includes(fer)){ DIAS_CFG.feriados=[...DIAS_CFG.feriados,fer].sort(); setFer(""); re(); } };
   const delFer=f=>{ DIAS_CFG.feriados=DIAS_CFG.feriados.filter(x=>x!==f); re(); };
   const dnames=["D","L","M","X","J","V","S"];
-  const PAT=[["diario","Todos los días del mes"],["finde","Solo fines de semana"],["vsd","Viernes · Sábado · Domingo"],["personalizado","Personalizado (por día de semana)"],["mensual","Una vez al mes"],["evento","Cada que se presente (sin programación fija)"]];
+  const PAT=[["diario","Todos los días del mes"],["finde","Solo fines de semana"],["vsd","Viernes · Sábado · Domingo"],["personalizado","Personalizado (por día de semana)"],["mensual","Una vez al mes"],["evento","Por evento / cantidad al mes (sin días fijos)"]];
   return <div>
     <div className="card"><h3>📅 Feriados (se suman a los días esperados)</h3>
       <div className="row"><input type="date" className="inp" style={{flex:1}} value={fer} onChange={e=>setFer(e.target.value)}/>
@@ -1368,10 +1411,14 @@ function DiasEsperadosEditor({user,toast,onSave}){
     {areas.map(a=>{ const c=DIAS_CFG.areas[a]||{patron:'diario'};
       const dias=diasEsperados(a,hoy.getFullYear(),hoy.getMonth(),false);
       return <div className="card" key={a} style={{padding:12}}>
-        <div style={{fontWeight:700,fontSize:13.5,marginBottom:8}}>{a} <span className="ddias">· {c.patron==='evento'?'por evento (no programado)':(c.patron==='mensual'?'1 vez al mes':dias+' días este mes')}</span></div>
+        <div style={{fontWeight:700,fontSize:13.5,marginBottom:8}}>{a} <span className="ddias">· {c.patron==='evento'?((Number(c.mes)||0)>0?(c.mes+' esperados al mes'):'por evento (sin meta de cumplimiento)'):(c.patron==='mensual'?'1 vez al mes':dias+' días este mes')}</span></div>
         <select className="inp" value={c.patron} onChange={e=>setPatron(a,e.target.value)}>{PAT.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
         {c.patron==='personalizado' && <div className="row" style={{marginTop:8,gap:6}}>{dnames.map((dn,d)=>
           <button key={d} className={"opt"+((c.dias||[]).includes(d)?" on":"")} style={{minWidth:40,padding:"8px 0"}} onClick={()=>toggleDia(a,d)}>{dn}</button>)}</div>}
+        {c.patron==='evento' && <div className="row" style={{marginTop:8,gap:8,alignItems:"center",flexWrap:"wrap"}}>
+          <span className="hint" style={{margin:0}}>¿Cuántos se esperan al mes?</span>
+          <input type="number" min="0" className="inp" style={{maxWidth:90}} value={c.mes||""} onChange={e=>setMes(a,e.target.value)} placeholder="0"/>
+          <span className="hint" style={{margin:0}}>déjalo en 0 si no quieres medir cumplimiento.</span></div>}
       </div>;})}
     <button className="btn primary block" onClick={()=>{onSave();toast("Frecuencia guardada");}}>💾 Guardar frecuencia</button>
   </div>;
@@ -1480,7 +1527,7 @@ function ResumenGerencialILD(){
   const tabla=[...arr].sort((a,b)=>b.total-a.total);
   const sedeLbl = sede==="todas" ? "todas las sedes" : sede;
   return <div>
-    <h2 style={{margin:"4px 0 2px"}}>Resumen Gerencial · Índices Logísticos Diarios</h2>
+    <h2 style={{margin:"4px 0 2px"}}>Resumen Gerencial · Indicadores Logísticos Diarios</h2>
     <p className="sub">Cumplimiento y observaciones por área — {sedeLbl}.</p>
     <div className="seg" style={{flexWrap:"wrap"}}>
       <button className={sede==="todas"?"on":""} onClick={()=>setSede("todas")}>Todas las sedes</button>
@@ -1657,7 +1704,7 @@ function DeleteRecords({toast}){
   const idOf=r=>r.id||r.Codigo;
   const codeOf=r=>r.Codigo||("#"+r.id);
   const titleOf=r=> mod==="ILD"?`${r.area} · ${r.usuario}` : mod==="Compras"?r.Modelo : mod==="Sistemas"?r.Titulo : r.Descripcion;
-  async function del(id){ if(!confirm("¿Eliminar este registro de prueba? Es permanente y no afectará los índices del resto."))return;
+  async function del(id){ if(!confirm("¿Eliminar este registro de prueba? Es permanente y no afectará los indicadores del resto."))return;
     try{ await Store.remove(mod, id); toast("Registro eliminado"); }
     catch(e){ toast("No se pudo eliminar: "+(e.message||"")); } load(); }
   return <div className="card"><h3>🗑 Borrar registros de prueba</h3>
