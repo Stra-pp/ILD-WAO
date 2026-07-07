@@ -264,7 +264,7 @@ applyGestiona();
 
 /* ===== CONFIG ===== */
 const APP = {
-  version: "WAO HOTELS · ILD's · v2.5 · Firebase",
+  version: "WAO HOTELS · ILD's · v2.6 · Firebase",
   useGraph: true,   // arranca conectado a Google Drive (Client ID ya fijado abajo). Hay botón "Usar modo demo local" si se necesita.
   g: {
     clientId: "734460790404-2pbc3jriungek7dk2d5di6050bc7l2ja.apps.googleusercontent.com",  // Client ID de WAO (no es secreto: va en el frontend)
@@ -517,6 +517,8 @@ const DIAS_CFG = { feriados:[], areas:{} };  // areas[area] = {patron:'diario'|'
 function patronDias(p){ return p==='finde'?[0,6]:p==='vsd'?[0,5,6]:p==='diario'?[0,1,2,3,4,5,6]:null; }
 function diasEsperados(area,year,month,hastaHoy){
   const cfg=DIAS_CFG.areas[area]||{patron:'diario'};
+  if(cfg.patron==='evento') return 0;
+  if(cfg.patron==='mensual') return 1;
   let set = cfg.patron==='personalizado' ? (cfg.dias||[]) : patronDias(cfg.patron);
   if(!set) set=[0,1,2,3,4,5,6];
   const hoy=new Date(); const lastDay=new Date(year,month+1,0).getDate();
@@ -773,6 +775,7 @@ function ILDForm({user,toast,onSaved,setFoto}){
           <option value="">Selecciona…</option>
           {areas.filter(a=>!localidad||!(AC[a]&&AC[a].localidad)||AC[a].localidad===localidad).map(a=><option key={a}>{a}</option>)}</select></Field>
       {area && <div className="hint">Aprobador: <b>{APR[area]||"—"}</b></div>}
+      {area && AC[area] && AC[area].std && <div className="hint" style={{marginTop:4}}>📖 <a href={AC[area].std} target="_blank" rel="noreferrer" style={{color:"var(--ocean)",fontWeight:700}}>Ver estándar / product book</a></div>}
     </div>
     {needsTurno && <div className="card"><h3>🔄 Turno</h3>
       <div className="opts">
@@ -786,7 +789,7 @@ function ILDForm({user,toast,onSaved,setFoto}){
           {items.map((it,i)=>{ const tx=itemText(it);
             return <button key={i} className={"opt"+(zona===tx?" on":"")} style={{textAlign:"left"}} onClick={()=>setZona(tx)}>{zona===tx?"🔘":"⚪"} {tx}</button>; })}
         </div></div>
-      <div className="card"><h3>📷 Fotos — {fotos.length}/3–5</h3>
+      <div className="card"><h3>📷 Fotos — {fotos.length}/3–5</h3><div className="hint" style={{marginTop:2,marginBottom:8,color:"#8a5a1a"}}>⚠️ No incluyas huéspedes ni datos personales en las fotos de áreas comunes.</div>
         <input id="ild-file-l" type="file" accept="image/*" capture="environment" multiple style={{display:"none"}} onChange={onFiles}/>
         <button className="btn ghost block" onClick={()=>document.getElementById("ild-file-l").click()}>
           {fotos.length>=3?(fotos.length>=5?"📸 Máximo (5) ✓":"📸 Agregar más (hasta 5)"):`📸 Subir (faltan ${3-fotos.length})`}</button>
@@ -818,7 +821,7 @@ function ILDForm({user,toast,onSaved,setFoto}){
             <div className="cbox">{checks[i]?"✓":""}</div><span className="ctext">{i+1}. {tx}</span></div>;
         })}
       </div>
-      {req>0 && <div className="card"><h3>📷 Fotos — {fotos.length}/{req}</h3>
+      {req>0 && <div className="card"><h3>📷 Fotos — {fotos.length}/{req}</h3><div className="hint" style={{marginTop:2,marginBottom:8,color:"#8a5a1a"}}>⚠️ No incluyas huéspedes ni datos personales en las fotos de áreas comunes.</div>
         <input id="ild-file" type="file" accept="image/*" capture="environment" multiple style={{display:"none"}} onChange={onFiles}/>
         <button className="btn ghost block" onClick={()=>document.getElementById("ild-file").click()}>
           {fotos.length>=req?"📸 Completo ✓":`📸 Subir (${req-fotos.length} restantes)`}</button>
@@ -1050,7 +1053,7 @@ function ILDDash({user,regs}){
         tDias=allRows.reduce((s,r)=>s+r.dias,0), cumGlobal=tDias?Math.round(((tAp+tOb)/tDias)*100):0;
   function exportar(){ const rows=allRows.map(r=>({Grupo:AC[r.area]?.g,Area:r.area,Turno:r.turno,
     DiasEsperados:r.dias,DiasMes:r.diasMes,Subidos:r.subidos,Aprobados:r.ap,ConObs:r.ob,Pendientes:r.pe,
-    Cumplimiento:r.cumpl+"%",TiempoPromHoras:r.horas.toFixed(2)}));
+    Cumplimiento:r.dias?r.cumpl+"%":"Por evento",TiempoPromHoras:r.horas.toFixed(2)}));
     exportXLSX(rows,"Dashboard",`Dashboard_ILD_${meses[mes]}_${year}`); }
   return <div>
     <div className="row" style={{marginBottom:12}}>
@@ -1079,7 +1082,7 @@ function ILDDash({user,regs}){
           <td><span className="dnum">{r.subidos}</span></td>
           <td><span className="dnum g">{r.ap}</span></td>
           <td>{r.ob?<span className="dnum p">{r.ob}</span>:<span style={{color:"#ccc"}}>–</span>}</td>
-          <td><span className="dcirc" style={{borderColor:cssVar(colorCumpl(r.cumpl)),color:cssVar(colorCumpl(r.cumpl))}}>{r.cumpl}%</span></td>
+          <td>{r.dias?<span className="dcirc" style={{borderColor:cssVar(colorCumpl(r.cumpl)),color:cssVar(colorCumpl(r.cumpl))}}>{r.cumpl}%</span>:<span className="ddias">por evento</span>}</td>
           <td>{r.horas?r.horas.toFixed(2):"0.00"}</td></tr>)}</tbody>
       </table></div>
     </div>)}
@@ -1202,7 +1205,9 @@ function ILDEditorModal({e,onClose,onSaved,toast}){
   const [gNuevo,setGNuevo]=useState(""); const [localidad,setLocalidad]=useState(e.localidad);
   const [aprobador,setAprobador]=useState(e.aprobador); const [fotos,setFotos]=useState(e.fotos);
   const [modo,setModo]=useState(e.modo); const [items,setItems]=useState(e.items);
+  const [resp,setResp]=useState(e.resp||""); const [supl,setSupl]=useState(e.supl||""); const [std,setStd]=useState(e.std||"");
   const roles=rolesAprobadores();
+  const colabs=[...new Set(USERS.filter(u=>u.rol==='colaborador').map(u=>u.nombre))];
   const TIPOS=[["foto","📷 Foto"],["sino","✅ Sí / No / N/A"],["texto","📝 Texto"],["apertura_cierre","🔁 Apertura/Cierre"],["comida","🍽️ Desayuno/Almuerzo/Cena"]];
   const upd=(i,k,v)=>setItems(a=>a.map((it,j)=>j===i?{...it,[k]:v}:it));
   const del=i=>setItems(a=>a.filter((_,j)=>j!==i));
@@ -1217,7 +1222,7 @@ function ILDEditorModal({e,onClose,onSaved,toast}){
     const clean=items.filter(it=>String(it.t).trim()).map(it=>({t:it.t.trim(),tipo:it.tipo}));
     if(!e._new && n!==orig){ delete AC[orig]; delete APR[orig]; delete CL[orig]; delete AMODO[orig];
       USERS.forEach(u=>{ if(u.areas) u.areas=u.areas.map(x=>x===orig?n:x); }); }
-    AC[n]={r:Number(fotos)||0,g:g||"",localidad:localidad||""};
+    AC[n]={r:Number(fotos)||0,g:g||"",localidad:localidad||"",resp:resp||"",supl:supl||"",std:std||""};
     APR[n]=aprobador||""; CL[n]=clean; AMODO[n]=modo;
     onSaved(); toast("ILD guardado: "+n);
     if(!e._new && n!==orig){ try{ const all=await Store.read("ILD"); let c=0; const u=all.map(r=>{if(r.area===orig){c++;return{...r,area:n};}return r;}); if(c) await Store.write("ILD",u);}catch(x){} }
@@ -1229,6 +1234,9 @@ function ILDEditorModal({e,onClose,onSaved,toast}){
       <div style={{flex:1}}><Field label="Grupo"><select className="inp" value={grupo} onChange={e2=>setGrupo(e2.target.value)}><option value="">—</option>{GRUPOS.map(g=><option key={g}>{g}</option>)}<option value="__nuevo">+ Nuevo grupo…</option></select></Field></div></div>
     {grupo==="__nuevo" && <Field label="Nombre del nuevo grupo" req><input className="inp" value={gNuevo} onChange={e2=>setGNuevo(e2.target.value)}/></Field>}
     <Field label="Aprobador" hint={roles.length?"":"Crea primero un usuario con rol Aprobador en la pestaña Usuarios."}><select className="inp" value={aprobador} onChange={e2=>setAprobador(e2.target.value)}><option value="">— sin asignar —</option>{roles.map(r=><option key={r}>{r}</option>)}</select></Field>
+    <div className="row"><div style={{flex:1}}><Field label="Responsable" hint={colabs.length?"":"Crea colaboradores en Usuarios."}><select className="inp" value={resp} onChange={e2=>setResp(e2.target.value)}><option value="">—</option>{colabs.map(c=><option key={c}>{c}</option>)}</select></Field></div>
+      <div style={{flex:1}}><Field label="Suplente"><select className="inp" value={supl} onChange={e2=>setSupl(e2.target.value)}><option value="">—</option>{colabs.map(c=><option key={c}>{c}</option>)}</select></Field></div></div>
+    <Field label="Estándar / product book (enlace)" hint="Opcional. Pega el enlace al estándar para medir con el mismo criterio."><input className="inp" value={std} onChange={e2=>setStd(e2.target.value)} placeholder="https://…"/></Field>
     <Field label="Modo"><select className="inp" value={modo} onChange={e2=>setModo(e2.target.value)}><option value="normal">Checklist normal</option><option value="lista">Lista (elegir una opción + 3 a 5 fotos)</option></select></Field>
     {modo==='normal' && <div className="hint" style={{marginBottom:10}}>Fotos requeridas = {nFotos} (cada ítem tipo 📷 Foto suma una).</div>}
     <div style={{fontWeight:700,margin:"8px 0 6px",fontFamily:"'Barlow Condensed',sans-serif"}}>Checklist — {items.length} {modo==='lista'?"opciones":"ítems"}</div>
@@ -1250,9 +1258,9 @@ function ILDEditorModal({e,onClose,onSaved,toast}){
 }
 function ILDBuilder({user,toast,onSave}){
   const [,force]=useState(0); const re=()=>force(x=>x+1); const [edit,setEdit]=useState(null);
-  function nuevo(){ setEdit({_new:true,nombre:"",grupo:(GRUPOS[0]||""),localidad:(LOCALIDADES[0]||""),aprobador:"",fotos:0,modo:"normal",items:[]}); }
+  function nuevo(){ setEdit({_new:true,nombre:"",grupo:(GRUPOS[0]||""),localidad:(LOCALIDADES[0]||""),aprobador:"",fotos:0,modo:"normal",items:[],resp:"",supl:"",std:""}); }
   function abrir(a){ const norm=it=>(typeof it==='object'&&it)?{t:it.t,tipo:it.tipo||'foto'}:{t:it,tipo:'foto'};
-    setEdit({_new:false,orig:a,nombre:a,grupo:AC[a].g||"",localidad:AC[a].localidad||"",aprobador:APR[a]||"",fotos:AC[a].r||0,modo:areaModo(a),items:(CL[a]||[]).map(norm)}); }
+    setEdit({_new:false,orig:a,nombre:a,grupo:AC[a].g||"",localidad:AC[a].localidad||"",aprobador:APR[a]||"",fotos:AC[a].r||0,modo:areaModo(a),items:(CL[a]||[]).map(norm),resp:AC[a].resp||"",supl:AC[a].supl||"",std:AC[a].std||""}); }
   function borrar(a){ if(!confirm("¿Eliminar el ILD \""+a+"\"? Los registros históricos NO se borran."))return;
     delete AC[a];delete APR[a];delete CL[a];delete AMODO[a]; USERS.forEach(u=>{if(u.areas)u.areas=u.areas.filter(x=>x!==a);}); onSave(); re(); toast("ILD eliminado: "+a); }
   const ilds=Object.keys(AC); const porLoc={};
@@ -1309,7 +1317,7 @@ function ILDConfig({user,toast,onSave}){
       <button className={sec==="grupos"?"on":""} onClick={()=>setSec("grupos")}>Grupos</button>
       <button className={sec==="local"?"on":""} onClick={()=>setSec("local")}>Localidades</button>
       <button className={sec==="usuarios"?"on":""} onClick={()=>setSec("usuarios")}>Usuarios</button>
-      <button className={sec==="dias"?"on":""} onClick={()=>setSec("dias")}>Días esperados</button>
+      <button className={sec==="dias"?"on":""} onClick={()=>setSec("dias")}>Frecuencia</button>
     </div>
     {sec==="ilds" && <React.Fragment><PresetExperiencia toast={toast} onSave={onSave}/><ILDBuilder user={user} toast={toast} onSave={onSave}/></React.Fragment>}
     {sec==="grupos" && <GruposEditor toast={toast} onSave={onSave}/>}
@@ -1349,7 +1357,7 @@ function DiasEsperadosEditor({user,toast,onSave}){
   const addFer=()=>{ if(fer && !DIAS_CFG.feriados.includes(fer)){ DIAS_CFG.feriados=[...DIAS_CFG.feriados,fer].sort(); setFer(""); re(); } };
   const delFer=f=>{ DIAS_CFG.feriados=DIAS_CFG.feriados.filter(x=>x!==f); re(); };
   const dnames=["D","L","M","X","J","V","S"];
-  const PAT=[["diario","Todos los días del mes"],["finde","Solo fines de semana"],["vsd","Viernes · Sábado · Domingo"],["personalizado","Personalizado"]];
+  const PAT=[["diario","Todos los días del mes"],["finde","Solo fines de semana"],["vsd","Viernes · Sábado · Domingo"],["personalizado","Personalizado (por día de semana)"],["mensual","Una vez al mes"],["evento","Cada que se presente (sin programación fija)"]];
   return <div>
     <div className="card"><h3>📅 Feriados (se suman a los días esperados)</h3>
       <div className="row"><input type="date" className="inp" style={{flex:1}} value={fer} onChange={e=>setFer(e.target.value)}/>
@@ -1360,12 +1368,12 @@ function DiasEsperadosEditor({user,toast,onSave}){
     {areas.map(a=>{ const c=DIAS_CFG.areas[a]||{patron:'diario'};
       const dias=diasEsperados(a,hoy.getFullYear(),hoy.getMonth(),false);
       return <div className="card" key={a} style={{padding:12}}>
-        <div style={{fontWeight:700,fontSize:13.5,marginBottom:8}}>{a} <span className="ddias">· {dias} días este mes</span></div>
+        <div style={{fontWeight:700,fontSize:13.5,marginBottom:8}}>{a} <span className="ddias">· {c.patron==='evento'?'por evento (no programado)':(c.patron==='mensual'?'1 vez al mes':dias+' días este mes')}</span></div>
         <select className="inp" value={c.patron} onChange={e=>setPatron(a,e.target.value)}>{PAT.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
         {c.patron==='personalizado' && <div className="row" style={{marginTop:8,gap:6}}>{dnames.map((dn,d)=>
           <button key={d} className={"opt"+((c.dias||[]).includes(d)?" on":"")} style={{minWidth:40,padding:"8px 0"}} onClick={()=>toggleDia(a,d)}>{dn}</button>)}</div>}
       </div>;})}
-    <button className="btn primary block" onClick={()=>{onSave();toast("Días esperados guardados");}}>💾 Guardar días esperados</button>
+    <button className="btn primary block" onClick={()=>{onSave();toast("Frecuencia guardada");}}>💾 Guardar frecuencia</button>
   </div>;
 }
 function rolesAprobadores(){ return [...new Set(USERS.filter(u=>['aprobador','gerencia','desarrollador'].includes(u.rol)).map(u=>u.nombre))]; }
