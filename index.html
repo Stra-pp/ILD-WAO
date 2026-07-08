@@ -264,7 +264,7 @@ applyGestiona();
 
 /* ===== CONFIG ===== */
 const APP = {
-  version: "WAO HOTELS · ILD's · v3.1 · Firebase",
+  version: "WAO HOTELS · ILD's · v3.2 · Firebase",
   useGraph: true,   // arranca conectado a Google Drive (Client ID ya fijado abajo). Hay botón "Usar modo demo local" si se necesita.
   g: {
     clientId: "734460790404-2pbc3jriungek7dk2d5di6050bc7l2ja.apps.googleusercontent.com",  // Client ID de WAO (no es secreto: va en el frontend)
@@ -610,7 +610,7 @@ function PhotoField({fotos,setFotos,multiple=true,label,req,hint,setFoto}){
     const comp=await Promise.all(srcs.map(s=>comprimirImg(s,1000,.7)));
     setFotos(multiple?[...fotos,...comp]:comp.slice(0,1)); }
   return <Field label={label} req={req} hint={hint}>
-    <input ref={ref} type="file" accept="image/*" capture="environment" multiple={multiple} style={{display:"none"}} onChange={onFiles}/>
+    <input ref={ref} type="file" accept="image/*" multiple={multiple} style={{display:"none"}} onChange={onFiles}/>
     <button className="btn ghost block" onClick={()=>ref.current.click()}>📷 {fotos.length?`${fotos.length} foto(s) — agregar más`:"Subir foto"}</button>
     <div className="fgrid">{fotos.map((s,i)=><div key={i} className="fthumb"><img src={s} onClick={()=>setFoto&&setFoto(s)}/>
       <button className="fdel" onClick={()=>setFotos(fotos.filter((_,j)=>j!==i))}>✕</button><span className="fnum">{i+1}</span></div>)}</div>
@@ -800,7 +800,7 @@ function ILDForm({user,toast,onSaved,setFoto}){
             return <button key={i} className={"opt"+(zona===tx?" on":"")} style={{textAlign:"left"}} onClick={()=>setZona(tx)}>{zona===tx?"🔘":"⚪"} {tx}</button>; })}
         </div></div>
       <div className="card"><h3>📷 Fotos — {fotos.length}/3–5</h3><div className="hint" style={{marginTop:2,marginBottom:8,color:"#8a5a1a"}}>⚠️ No incluyas huéspedes ni datos personales en las fotos de áreas comunes.</div>
-        <input id="ild-file-l" type="file" accept="image/*" capture="environment" multiple style={{display:"none"}} onChange={onFiles}/>
+        <input id="ild-file-l" type="file" accept="image/*" multiple style={{display:"none"}} onChange={onFiles}/>
         <button className="btn ghost block" onClick={()=>document.getElementById("ild-file-l").click()}>
           {fotos.length>=3?(fotos.length>=5?"📸 Máximo (5) ✓":"📸 Agregar más (hasta 5)"):`📸 Subir (faltan ${3-fotos.length})`}</button>
         <div className="fgrid">{fotos.map((s,i)=><div key={i} className="fthumb">
@@ -832,7 +832,7 @@ function ILDForm({user,toast,onSaved,setFoto}){
         })}
       </div>
       {req>0 && <div className="card"><h3>📷 Fotos — {fotos.length}/{req}</h3><div className="hint" style={{marginTop:2,marginBottom:8,color:"#8a5a1a"}}>⚠️ No incluyas huéspedes ni datos personales en las fotos de áreas comunes.</div>
-        <input id="ild-file" type="file" accept="image/*" capture="environment" multiple style={{display:"none"}} onChange={onFiles}/>
+        <input id="ild-file" type="file" accept="image/*" multiple style={{display:"none"}} onChange={onFiles}/>
         <button className="btn ghost block" onClick={()=>document.getElementById("ild-file").click()}>
           {fotos.length>=req?"📸 Completo ✓":`📸 Subir (${req-fotos.length} restantes)`}</button>
         <div className="fgrid">{fotos.map((s,i)=><div key={i} className="fthumb">
